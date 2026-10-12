@@ -17,6 +17,12 @@
         <div class="sub">Diseña el parque, revisa medidas y saca el presupuesto</div>
       </div>
       <div class="spacer"></div>
+      <div id="cloudStatus" class="status" hidden></div>
+      <div class="group cloud" id="cloudGroup" hidden>
+        <button data-action="cloudsave" title="Guardar en la nube"></button>
+        <button data-action="cloudopen" title="Abrir un parque de la nube"></button>
+        <button data-action="logout" title="Cerrar sesión"></button>
+      </div>
       <div class="group">
         <button data-action="new" title="Parque nuevo"></button>
         <button data-action="open" title="Abrir un parque guardado (.json)"></button>
@@ -78,6 +84,26 @@
       <div id="tab-presupuesto" class="tab"></div>
       <div id="tab-ajustes" class="tab"></div>
     </aside>
+  </div>
+  <div id="login" class="overlay" hidden>
+    <form class="card dialog" id="loginForm" autocomplete="on">
+      <div class="lockIcon"></div>
+      <h2>Diseñador de parques 3D</h2>
+      <p class="muted">Introduce tu usuario y contraseña para entrar.</p>
+      <label for="loginUser">Usuario</label>
+      <input id="loginUser" type="text" autocomplete="username" required>
+      <label for="loginPass">Contraseña</label>
+      <input id="loginPass" type="password" autocomplete="current-password" required>
+      <div id="loginError" class="error" hidden></div>
+      <button type="submit" class="primary big">Entrar</button>
+    </form>
+  </div>
+  <div id="cloudModal" class="overlay" hidden>
+    <div class="card dialog wide">
+      <div class="dialogHead"><h2>Parques en la nube</h2><button type="button" class="close" data-close>Cerrar</button></div>
+      <div id="cloudList" class="list"></div>
+      <div class="row"><button type="button" class="primary" id="cloudSaveNew">Guardar el parque actual como nuevo</button></div>
+    </div>
   </div>
   <script type="module" src="./src/main.js"></script>
 </body>

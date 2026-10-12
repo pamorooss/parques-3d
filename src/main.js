@@ -8,6 +8,7 @@ import { UI } from './ui.js';
 import { ELEMENTS, defaultColors } from './catalog.js';
 import { RED } from './palette.js';
 import { ICONS } from './icons.js';
+import { cloud } from './cloud.js';
 import { computeBudget } from './budget.js';
 import { saveJSON, snapshotPNG, savePhoto, saveCSV, openFicha } from './export.js';
 
@@ -126,13 +127,84 @@ store.subscribe(state => {
   refreshSelectionVisuals();
   ui.refresh();
   try { localStorage.setItem(AUTOSAVE, JSON.stringify(state)); } catch (e) { /* sin almacenamiento */ }
+  scheduleCloudAutosave();
 });
+
+// ---------- nube: sesión y parques guardados ----------
+const loginBox = document.getElementById('login'), loginForm = document.getElementById('loginForm'), loginError = document.getElementById('loginError');
+const cloudStatus = document.getElementById('cloudStatus'), cloudGroup = document.getElementById('cloudGroup'), cloudModal = document.getElementById('cloudModal');
+document.querySelector('#login .lockIcon').innerHTML = ICONS.lock;
+let cloudOn = false, cloudTimer = null, cloudBusy = false;
+const hhmm = d => new Date(d).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+function setStatus(text, cls = '') { cloudStatus.hidden = !text; cloudStatus.textContent = text; cloudStatus.className = 'status ' + cls; }
+function showLogin(msg = '') { loginError.hidden = !msg; loginError.textContent = msg; loginBox.hidden = false; cloudGroup.hidden = true; cloudOn = false; setTimeout(() => document.getElementById('loginUser').focus(), 50); }
+function enterCloud() { loginBox.hidden = true; cloudGroup.hidden = false; cloudOn = true; const c = store.state.cloud; setStatus(c && c.id ? `En la nube · ${c.nombre || ''}`.trim() : 'Nube conectada · sin guardar', 'ok'); }
+loginForm.onsubmit = async e => {
+  e.preventDefault(); loginError.hidden = true;
+  const btn = loginForm.querySelector('button[type=submit]'); btn.disabled = true;
+  try { await cloud.login(document.getElementById('loginUser').value.trim(), document.getElementById('loginPass').value); enterCloud(); }
+  catch (err) { loginError.hidden = false; loginError.textContent = err.message; }
+  btn.disabled = false;
+};
+async function initCloud() {
+  const mode = await cloud.probe();
+  if (mode === 'ok') enterCloud();
+  else if (mode === 'login') showLogin();
+  else if (mode === 'unconfigured') showLogin('La nube no está configurada: faltan APP_USER y APP_PASS en Netlify.');
+  else setStatus('Modo local (sin nube)');
+}
+// Guardado automático en la nube: 2,5 s después del último cambio, si el parque ya está en la nube.
+function scheduleCloudAutosave() {
+  if (!cloudOn || !(store.state.cloud && store.state.cloud.id)) return;
+  clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudSave(true), 2500);
+}
+async function cloudSave(auto = false) {
+  if (!cloudOn || cloudBusy) return;
+  cloudBusy = true; setStatus('Guardando en la nube…');
+  try {
+    const st = store.state, id = st.cloud && st.cloud.id;
+    const { cloud: _c, ...data } = st;
+    const meta = await cloud.save(id || '', data);
+    st.cloud = { id: meta.id, nombre: meta.nombre, updated: meta.updated };
+    try { localStorage.setItem(AUTOSAVE, JSON.stringify(st)); } catch (e) { /* sin almacenamiento */ }
+    setStatus(`Guardado en la nube · ${hhmm(meta.updated)}`, 'ok');
+  } catch (err) {
+    if (err.status === 401) showLogin('La sesión ha caducado, vuelve a entrar.');
+    else setStatus('Error al guardar: ' + err.message, 'err');
+    if (!auto && err.status !== 401) alert('No se ha podido guardar en la nube: ' + err.message);
+  }
+  cloudBusy = false;
+}
+async function openCloudModal() {
+  if (!cloudOn) return;
+  const list = document.getElementById('cloudList'); list.innerHTML = '<p class="muted">Cargando…</p>'; cloudModal.hidden = false;
+  try {
+    const items = await cloud.list();
+    list.innerHTML = items.length ? '' : '<p class="muted">Todavía no hay parques guardados en la nube.</p>';
+    const cur = store.state.cloud && store.state.cloud.id;
+    for (const it of items) {
+      const row = document.createElement('div'); row.className = 'it' + (it.id === cur ? ' current' : '');
+      row.innerHTML = `<div class="txt"><b>${it.nombre}</b><small>${it.cliente ? it.cliente + ' · ' : ''}${it.modulos} módulos, ${it.piezas} piezas · ${new Date(it.updated).toLocaleString('es-ES')}</small></div>`;
+      const open = document.createElement('button'); open.textContent = 'Abrir'; open.className = 'primary';
+      open.onclick = async () => { try { const data = await cloud.load(it.id); store.load({ ...data, cloud: { id: it.id, nombre: it.nombre, updated: it.updated } }); setSelection(null); sc.resetView(park.worldBox()); cloudModal.hidden = true; enterCloud(); } catch (e) { alert('No se ha podido abrir: ' + e.message); } };
+      const del = document.createElement('button'); del.innerHTML = ICONS.trash; del.className = 'danger'; del.title = 'Borrar de la nube';
+      del.onclick = async () => { if (!confirm(`¿Borrar "${it.nombre}" de la nube? No se puede deshacer.`)) return; try { await cloud.remove(it.id); if (it.id === cur) { store.state.cloud = null; } openCloudModal(); } catch (e) { alert('No se ha podido borrar: ' + e.message); } };
+      row.append(open, del); list.appendChild(row);
+    }
+  } catch (err) { list.innerHTML = `<p class="error">${err.message}</p>`; if (err.status === 401) { cloudModal.hidden = true; showLogin('La sesión ha caducado, vuelve a entrar.'); } }
+}
+document.getElementById('cloudSaveNew').onclick = async () => { store.state.cloud = null; cloudModal.hidden = true; await cloudSave(); };
+cloudModal.querySelector('[data-close]').onclick = () => { cloudModal.hidden = true; };
+cloudModal.addEventListener('click', e => { if (e.target === cloudModal) cloudModal.hidden = true; });
 
 // ---------- acciones de la barra superior ----------
 function handleTopbar(action) {
   const st = store.state;
   if (action === 'new') { store.load(newState()); setSelection(null); sc.resetView(null); }
   else if (action === 'open') document.getElementById('fileInput').click();
+  else if (action === 'cloudsave') cloudSave();
+  else if (action === 'cloudopen') openCloudModal();
+  else if (action === 'logout') { cloud.logout(); showLogin(); }
   else if (action === 'save') saveJSON(st);
   else if (action === 'undo') store.undo();
   else if (action === 'redo') store.redo();
@@ -318,6 +390,8 @@ function deleteThing(s, sel) {
 
 // ---------- teclado ----------
 window.addEventListener('keydown', e => {
+  if (!loginBox.hidden) return;
+  if (!cloudModal.hidden) { if (e.key === 'Escape') cloudModal.hidden = true; return; }
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
   const k = e.key.toLowerCase();
@@ -345,5 +419,6 @@ try { saved = JSON.parse(localStorage.getItem(AUTOSAVE)); } catch (e) { saved = 
 store.load(saved && (saved.modules || saved.cells) ? saved : demoState());
 ui.setTool('select');
 sc.resetView(park.worldBox());
+initCloud();
 window.__bk = { sc, store, park, ui, setSelection, get selection() { return selection; } };
 (function loop() { requestAnimationFrame(loop); sc.render(); })();

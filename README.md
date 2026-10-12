@@ -34,6 +34,18 @@ npm run dev     # abre http://localhost:5173
   presupuesto) lista para imprimir o guardar como PDF.
 - **Guardar / Abrir** exporta e importa el parque en `.json`. El trabajo en curso se guarda solo en el navegador.
 
+## Nube y acceso
+
+Desplegado en Netlify, la app pide usuario y contraseña y guarda los parques en Netlify Blobs
+(incluido en el plan gratis). Todo va en `netlify/functions/api.mjs`; el cliente está en `src/cloud.js`.
+
+- Credenciales: variables de entorno `APP_USER` y `APP_PASS` en Netlify (Site configuration →
+  Environment variables). Opcional `APP_SECRET` para firmar las sesiones. No van en el código.
+- Botones de nube en la barra superior: guardar, abrir (lista de parques) y cerrar sesión. Una vez
+  guardado, cada cambio se vuelve a guardar solo a los 2,5 s.
+- En local con `npm run dev` no hay API: la app funciona en "modo local" y guarda en el navegador.
+  Para probar la nube en local: `APP_USER=... APP_PASS=... npx netlify-cli dev`.
+
 ## Precios
 
 `src/catalog.js` lleva los precios públicos de bolakids.com (09/10/2026). Las partidas sin tarifa
