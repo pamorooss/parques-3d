@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Diseñador de parques 3D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="title">
+        <input id="parkName" placeholder="Nombre del parque" spellcheck="false">
+        <div class="sub">Diseña el parque, revisa medidas y saca el presupuesto</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="group">
+        <button data-action="new" title="Parque nuevo"></button>
+        <button data-action="open" title="Abrir un parque guardado (.json)"></button>
+        <button data-action="save" title="Guardar el parque como archivo .json"></button>
+      </div>
+      <div class="group">
+        <button data-action="undo" title="Deshacer (Ctrl+Z)"></button>
+        <button data-action="redo" title="Rehacer (Ctrl+Shift+Z)"></button>
+        <button data-action="view" title="Encuadrar el parque"></button>
+        <button data-action="dims" title="Mostrar u ocultar cotas"></button>
+      </div>
+      <button data-action="photo" class="pill" title="Descargar imagen PNG de la vista actual"><span>Foto</span></button>
+      <button data-action="ficha" class="pill primary" title="Ficha para el cliente: imagen + cotas + presupuesto (imprimir / PDF)"><span>Ficha</span></button>
+      <input type="file" id="fileInput" hidden accept=".json,application/json">
+    </header>
+    <aside id="left">
+      <section class="card"><h3>Herramientas</h3><div id="tools"></div></section>
+      <section class="card"><h3>Color y medidas</h3><div id="colorBox"></div></section>
+      <section class="card grow"><h3>Catálogo de piezas</h3><div id="catalog"></div></section>
+    </aside>
+    <main id="viewport">
+      <div id="hint"></div>
+      <div id="movepad" hidden>
+        <div class="pad">
+          <button data-move="up" title="Mover hacia delante (↑)"></button>
+          <button data-move="left" title="Mover a la izquierda (←)"></button>
+          <button data-move="down" title="Mover hacia atrás (↓)"></button>
+          <button data-move="right" title="Mover a la derecha (→)"></button>
+        </div>
+        <div class="col">
+          <button data-move="lvlup" title="Subir a la siguiente altura de apoyo (Re Pág)"><span>Subir</span></button>
+          <button data-move="lvldown" title="Bajar a la anterior altura de apoyo (Av Pág)"><span>Bajar</span></button>
+        </div>
+        <div class="col rot">
+          <button data-move="rotl" title="Girar a la izquierda"><span>Girar</span></button>
+          <button data-move="rotr" title="Girar a la derecha (R)"><span>Girar</span></button>
+        </div>
+        <div class="col">
+          <label for="moveStep">Paso</label>
+          <select id="moveStep" title="Cuánto se mueve con cada flecha (Mayús + flecha = 1 cm)">
+            <option value="half">½ módulo</option>
+            <option value="full">1 módulo</option>
+            <option value="25">25 cm</option>
+            <option value="10">10 cm</option>
+            <option value="5">5 cm</option>
+            <option value="1">1 cm</option>
+          </select>
+        </div>
+        <div class="col name"><span id="movepadName"></span></div>
+      </div>
+    </main>
+    <aside id="right">
+      <nav id="tabs">
+        <button data-tab="pieza" class="active"><span>Pieza</span></button>
+        <button data-tab="presupuesto"><span>Presupuesto</span></button>
+        <button data-tab="ajustes"><span>Ajustes</span></button>
+      </nav>
+      <div id="tab-pieza" class="tab active"></div>
+      <div id="tab-presupuesto" class="tab"></div>
+      <div id="tab-ajustes" class="tab"></div>
+    </aside>
+  </div>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
