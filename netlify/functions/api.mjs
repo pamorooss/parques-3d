@@ -5,7 +5,9 @@ import { getStore } from '@netlify/blobs';
 // (Site configuration → Environment variables en Netlify). Nunca van en el código.
 
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
-const creds = () => ({ user: process.env.APP_USER || '', pass: process.env.APP_PASS || '' });
+// Tolerante con espacios o comillas pegados al valor al escribirlo en el panel de Netlify.
+const clean = s => String(s || '').trim().replace(/^["']+|["']+$/g, '').trim();
+const creds = () => ({ user: clean(process.env.APP_USER), pass: clean(process.env.APP_PASS) });
 
 async function sha(text) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -30,7 +32,8 @@ export default async (req) => {
     const c = creds();
     if (!c.user || !c.pass) return json({ error: 'Faltan APP_USER y APP_PASS en las variables de entorno de Netlify.' }, 503);
     const body = await req.json().catch(() => ({}));
-    if (body.user === c.user && body.pass === c.pass) return json({ token: await tokenFor(c) });
+    const ok = clean(body.user).toLowerCase() === c.user.toLowerCase() && clean(body.pass) === c.pass; // usuario sin distinguir mayúsculas
+    if (ok) return json({ token: await tokenFor(c) });
     return json({ error: 'Usuario o contraseña incorrectos.' }, 401);
   }
   if (!(await authorized(req))) return json({ error: 'No autorizado' }, 401);
