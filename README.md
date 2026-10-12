@@ -55,7 +55,7 @@ Desplegado en Netlify, la app pide usuario y contraseña y guarda los parques en
 
 ## Estructura del código
 
-- `src/state.js` modelo (módulos libres en metros, migración de formatos antiguos) y undo/redo · `src/structure.js` deriva tubos y uniones de los módulos
+- `src/thumbs.js` miniaturas 3D del catálogo (se generan al arrancar con el renderer principal) · `src/state.js` modelo (módulos libres en metros, migración de formatos antiguos) y undo/redo · `src/structure.js` deriva tubos y uniones de los módulos
 - `src/catalog.js` piezas, medidas y presupuesto · `src/palette.js` cartas de color reales
 - `src/budget.js` presupuesto y optimización de corte de coquillas y tubo
 - `src/models.js` geometría procedural de cada pieza · `src/render.js` escena · `src/ui.js` paneles

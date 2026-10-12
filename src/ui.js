@@ -40,14 +40,17 @@ export class UI {
   }
   buildCatalog() {
     for (const cat of CATEGORIES) {
-      const sec = h('div', 'cat'); sec.appendChild(h('h4', '', cat.name));
-      for (const [id, d] of Object.entries(ELEMENTS)) if (d.cat === cat.id) {
-        const b = h('button', 'item', d.name); b.dataset.place = id; b.title = d.desc || '';
-        b.onclick = () => this.setTool('place', id); sec.appendChild(b);
+      const items = Object.entries(ELEMENTS).filter(([, d]) => d.cat === cat.id);
+      const sec = h('div', 'cat'); sec.appendChild(h('h4', '', `${cat.name}<em>${items.length}</em>`));
+      const grid = h('div', 'grid');
+      for (const [id, d] of items) {
+        const b = h('button', 'item', `<span class="thumb"><img alt="" data-thumb="${id}"></span><span class="nm">${d.name}</span>`); b.dataset.place = id; b.title = d.desc || d.name;
+        b.onclick = () => this.setTool('place', id); grid.appendChild(b);
       }
-      this.el.catalog.appendChild(sec);
+      sec.appendChild(grid); this.el.catalog.appendChild(sec);
     }
   }
+  setThumb(type, url) { const img = this.el.catalog.querySelector(`img[data-thumb="${type}"]`); if (img) { img.src = url; img.parentElement.classList.add('ready'); } }
   buildTabs() {
     const tabIcons = { pieza: ICONS.piece, presupuesto: ICONS.money, ajustes: ICONS.settings };
     document.querySelectorAll('#tabs button').forEach(b => { b.insertAdjacentHTML('afterbegin', tabIcons[b.dataset.tab] || ''); b.onclick = () => this.showTab(b.dataset.tab); });

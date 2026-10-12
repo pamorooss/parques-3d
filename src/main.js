@@ -9,6 +9,7 @@ import { ELEMENTS, defaultColors } from './catalog.js';
 import { RED } from './palette.js';
 import { ICONS } from './icons.js';
 import { cloud } from './cloud.js';
+import { buildAllThumbs } from './thumbs.js';
 import { computeBudget } from './budget.js';
 import { saveJSON, snapshotPNG, savePhoto, saveCSV, openFicha } from './export.js';
 
@@ -420,5 +421,6 @@ store.load(saved && (saved.modules || saved.cells) ? saved : demoState());
 ui.setTool('select');
 sc.resetView(park.worldBox());
 initCloud();
+buildAllThumbs(sc.renderer, (type, url) => ui.setThumb(type, url));
 window.__bk = { sc, store, park, ui, setSelection, get selection() { return selection; } };
 (function loop() { requestAnimationFrame(loop); sc.render(); })();
