@@ -25,7 +25,7 @@ export function makeThumb(renderer, type) {
   // toboganes y rampas se muestran como en el parque: bajando desde una planta de 1 m
   const exit = ELEMENTS[type].place === 'exit';
   const el = { type, x: 0, y: exit ? 1 : 0, z: 0, r: 0, colors: defaultColors(type) };
-  const g = buildElement(el, { ...settings, caida: exit ? 100 : 0 }, { drop: exit ? 1 : 0 });
+  const g = buildElement(el, { ...settings, caida: exit ? 100 : 0 });
   g.traverse(o => { o.castShadow = false; o.receiveShadow = false; });
   scene.add(g);
   // encuadre: desde una diagonal baja, acercando hasta que las 8 esquinas de la caja llenan el cuadro

@@ -30,6 +30,7 @@ export function deriveStructure(state) {
       if (!l.segs.some(s => s[0] <= a && s[1] >= b)) continue; // hueco entre tramos
       const pa = point(l, a), pb = point(l, b);
       const key = `${pa.join(',')}|${pb.join(',')}`;
+      if (state.hiddenTubes && state.hiddenTubes[key]) continue; // tramo quitado a mano
       tubes.push({ key, a: pa, b: pb, axis: l.axis, len: b - a, color: state.coquillaColors[key] || state.settings.colorCoquilla });
       touch(pa, '+' + l.axis); touch(pb, '-' + l.axis);
     }
@@ -54,6 +55,17 @@ export function deriveStructure(state) {
   return { tubes, nodes: nodeList };
 }
 
+// ¿El tramo de tubo (a, b en cm) está en una arista del módulo?
+export function tubeOnModule(m, a, b) {
+  const x0 = cm(m.x), y0 = cm(m.y), z0 = cm(m.z), x1 = cm(m.x + m.w), y1 = cm(m.y + m.h), z1 = cm(m.z + m.d);
+  const onEdge = p => (p[0] === x0 || p[0] === x1 ? 1 : 0) + (p[1] === y0 || p[1] === y1 ? 1 : 0) + (p[2] === z0 || p[2] === z1 ? 1 : 0) >= 2
+    && p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1 && p[2] >= z0 && p[2] <= z1;
+  return onEdge(a) && onEdge(b);
+}
+// Claves de tubos quitados que pertenecen al módulo (para restaurarlos).
+export function hiddenTubesOf(state, m) {
+  return Object.keys(state.hiddenTubes || {}).filter(k => { const [a, b] = k.split('|').map(p => p.split(',').map(Number)); return tubeOnModule(m, a, b); });
+}
 // Módulos que contienen el tramo de tubo (para borrar por tubo).
 export function modulesWithTube(state, tube) {
   const [a, b] = [tube.a, tube.b];

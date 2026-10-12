@@ -2,6 +2,8 @@
 export const DEFAULT_SETTINGS = {
   nombre: 'Parque sin título',
   cliente: '',
+  referencia: '',     // referencia del presupuesto (ficha)
+  validez: 30,        // días de validez del presupuesto
   vano: 100,          // ancho del módulo (distancia entre postes)
   altura: 150,        // altura de cada planta
   coquillaLargo: 248, // largo de la coquilla de serie

@@ -182,3 +182,21 @@ table.budget tr.g td { padding-left: 10px; border-left: 3px solid var(--accent);
 table.budget tbody tr:not(.g):not(.tot):hover td { background: #faf9f6; }
 .kv > div, .stat { border: 1px solid transparent; } .kv > div:hover { border-color: var(--line); }
 #parkName::placeholder { color: #b5b3ab; }
+
+/* ---------- tres colores, estilos y formas ---------- */
+.swatch.none { background: #fff linear-gradient(135deg, transparent 44%, #c75249 44%, #c75249 56%, transparent 56%); }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #f2f1ec; border-radius: 10px; margin: 6px 0 8px; }
+.seg button { flex: 1; min-width: 60px; padding: 6px 8px; border: none; background: transparent; border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.seg button:hover { background: #fff; color: var(--text); }
+.seg button.on { background: #fff; color: var(--accent-dark); box-shadow: 0 1px 3px rgba(30,34,31,.12); }
+button.small { padding: 5px 10px; font-size: 12px; margin: 2px 0 6px; }
+button.link { padding: 0 4px; border: none; background: none; color: var(--accent-dark); font-weight: 600; text-decoration: underline; font-size: 12px; }
+label b { color: var(--text); font-weight: 600; }
+.stats em.warn { font-style: normal; font-size: 12px; color: var(--warn); }
+table.budget td .c { font-weight: 600; }
+table.budget td.price { white-space: nowrap; }
+table.budget td.price input { width: 70px; }
+table.budget button.reset { padding: 0 6px; margin-left: 2px; border: none; background: none; color: var(--muted); font-size: 14px; line-height: 1; vertical-align: middle; }
+table.budget button.reset:hover { color: var(--danger); }
+table.budget td small { color: var(--muted); font-size: 10px; }
+table.budget tr.g td.n { color: var(--accent-dark); font-weight: 600; font-size: 12px; }

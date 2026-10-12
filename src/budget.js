@@ -1,6 +1,6 @@
 import { deriveStructure, unionName, unionRef } from './structure.js';
-import { ELEMENTS, GENERIC_PRICES } from './catalog.js';
-import { localSettings, faceRect, rectKey, cm } from './state.js';
+import { ELEMENTS, GENERIC_PRICES, elementDims } from './catalog.js';
+import { localSettings, faceRect, rectKey, cm, floorShape, floorAreaFactor } from './state.js';
 import { nameOf } from './palette.js';
 
 // Corte 1D: piezas (cm) en barras de largo `stock`. First-fit decreasing.
@@ -56,7 +56,7 @@ export function computeBudget(state) {
 
   // Coquillas: por color, optimizando el corte de la pieza de 248 cm.
   const byColor = {};
-  for (const t of st.tubes) (byColor[t.color] = byColor[t.color] || []).push(t.len);
+  for (const t of st.tubes) if (t.color !== 'sin') (byColor[t.color] = byColor[t.color] || []).push(t.len);
   let piezas = 0;
   for (const [color, lens] of Object.entries(byColor)) {
     const cut = cutBars(lens, s.coquillaLargo);
@@ -85,7 +85,8 @@ export function computeBudget(state) {
     for (const face of ['top', 'bottom']) {
       const color = m.floors && m.floors[face]; if (!color) continue;
       const k = rectKey(faceRect(m, face)); if (seen.has(k)) continue; seen.add(k);
-      floors.push({ w: cm(m.w), d: cm(m.d), color });
+      const sh = floorShape(m, face);
+      floors.push({ w: cm(m.w), d: cm(m.d), color, factor: floorAreaFactor(sh), shape: sh.kind });
     }
   }
   if (nets) {
@@ -99,8 +100,8 @@ export function computeBudget(state) {
   // --- Suelos -----------------------------------------------------------------
   if (floors.length) {
     let fm2 = 0; const fmed = {};
-    for (const f of floors) { fm2 += f.w * f.d / 1e4; const mk = `${f.w}×${f.d}`; fmed[mk] = (fmed[mk] || 0) + 1; }
-    const det = Object.entries(fmed).map(([m, n]) => `${n} de ${m} cm`).join(', ');
+    for (const f of floors) { fm2 += f.w * f.d / 1e4 * f.factor; const mk = `${f.w}×${f.d} cm${f.shape === "half" ? " (mitad)" : f.shape === "tri" ? " (triángulo)" : ""}`; fmed[mk] = (fmed[mk] || 0) + 1; }
+    const det = Object.entries(fmed).map(([m, n]) => `${n} de ${m}`).join(', ');
     groups.push({ name: 'Plataformas', lines: [line('plataforma_m2', { detalle: `${floors.length} plataformas (${det})`, cantidad: +fm2.toFixed(2) }, state)] });
   }
 
@@ -109,8 +110,9 @@ export function computeBudget(state) {
   let foamShapes = 0;
   for (const el of state.elements) {
     const def = ELEMENTS[el.type]; if (!def) continue;
-    if (['piramide', 'cubo', 'cilindro'].includes(el.type)) foamShapes++;
-    for (const l of def.budget(el, localSettings(state, el))) {
+    if (['piramide', 'cubo', 'cilindro', 'hexagono'].includes(el.type)) foamShapes++;
+    const ls = localSettings(state, el);
+    for (const l of def.budget(el, ls, elementDims(el, ls))) {
       const k = l.key + '|' + (l.detalle || '');
       if (!agg[k]) agg[k] = { ...l, cantidad: 0 };
       agg[k].cantidad += l.cantidad;

@@ -1,11 +1,10 @@
 import * as THREE from 'three';
 import { Store, newState, bounds, moduleSummary, moduleById, moduleFor, localSettings, levelsAt, inFootprint, r3, cm } from './state.js';
-import { modulesWithTube } from './structure.js';
 import { createScene } from './scene.js';
 import { ParkRenderer } from './render.js';
 import { Dims } from './dims.js';
 import { UI } from './ui.js';
-import { ELEMENTS, defaultColors } from './catalog.js';
+import { ELEMENTS, defaultColors, elementDims } from './catalog.js';
 import { RED } from './palette.js';
 import { ICONS } from './icons.js';
 import { cloud } from './cloud.js';
@@ -112,7 +111,7 @@ function refreshSelectionVisuals() {
   let label = null;
   if (obj && selection.kind === 'element') {
     const el = store.state.elements.find(e => e.id === selection.id);
-    const d = ELEMENTS[el.type].dims(localSettings(store.state, el), el);
+    const d = elementDims(el, localSettings(store.state, el));
     const b = new THREE.Box3().setFromObject(obj);
     label = { label: `${d.l} × ${d.a} × ${d.h} cm`, pos: new THREE.Vector3((b.min.x + b.max.x) / 2, b.max.y + 0.25, (b.min.z + b.max.z) / 2) };
   } else if (obj && selection.kind === 'module') {
@@ -217,8 +216,8 @@ function handleTopbar(action) {
     const b = bounds(st);
     const dimsText = b ? [
       { k: 'Largo', v: `${cm(b.max[0] - b.min[0])} cm` }, { k: 'Ancho', v: `${cm(b.max[2] - b.min[2])} cm` },
-      { k: 'Alto', v: `${cm(b.max[1] - b.min[1])} cm` }, { k: 'Módulos', v: moduleSummary(st).map(m => m + ' cm').join(', ') },
-      { k: 'Plantas', v: `${b.plantas}` }] : [];
+      { k: 'Alto', v: `${cm(b.max[1] - b.min[1])} cm` }, { k: 'Plantas', v: `${b.plantas}` },
+      { k: 'Módulos', v: `${st.modules.length} (${moduleSummary(st).join(', ')} cm)` }] : [];
     openFicha(st, computeBudget(st), takePhoto(), dimsText);
   }
 }
@@ -297,7 +296,7 @@ function placeTarget(h) {
 }
 function ghostForPlace(t) {
   const el = { type: ui.placeType, x: t.x, y: t.y, z: t.z, r: t.r, colors: {} };
-  const d = ELEMENTS[ui.placeType].dims(localSettings(store.state, el), el);
+  const d = elementDims(el, localSettings(store.state, el));
   const w = (t.r % 2 ? d.a : d.l) / 100, dd = (t.r % 2 ? d.l : d.a) / 100, hh = Math.max(0.1, d.h / 100);
   return { x0: t.x - w / 2, y0: t.y, z0: t.z - dd / 2, w, h: hh, d: dd };
 }
@@ -331,7 +330,7 @@ function handleHover(cx, cy) {
   } else if (tool === 'place') {
     const t = placeTarget(hitAt(cx, cy)); if (t) park.setGhost({ box: ghostForPlace(t), rot: t.r, showArrow: true, color: 0xff7a00 });
   } else if (tool === 'suelo') {
-    const h = hitAt(cx, cy); if (h && h.type === 'module') park.setGhost({ box: faceBox(h.m, h.face === 'top' ? 'top' : 'bottom') });
+    const h = hitAt(cx, cy); if (h && h.type === 'module') park.setGhost({ box: faceBox(h.m, h.face === 'top' ? 'top' : 'bottom'), shape: ui.floorShape });
   } else if (tool === 'red') {
     const h = hitAt(cx, cy); if (h && h.type === 'module' && h.face !== 'top' && h.face !== 'bottom') park.setGhost({ box: faceBox(h.m, h.face) });
   }
@@ -348,11 +347,16 @@ function handleClick(cx, cy, button) {
   } else if (tool === 'place') {
     const t = placeTarget(hitAt(cx, cy)); if (!t) return;
     const type = ui.placeType;
-    store.mutate(s => { s.elements.push({ id: s.nextId++, type, x: t.x, y: t.y, z: t.z, r: t.r, colors: { ...defaultColors(type), ...(ui.placeColors[type] || {}) } }); });
+    const estilo = ui.placeStyle[type];
+    store.mutate(s => { s.elements.push({ id: s.nextId++, type, x: t.x, y: t.y, z: t.z, r: t.r, colors: { ...defaultColors(type), ...(ui.placeColors[type] || {}) }, ...(estilo ? { estilo } : {}) }); });
   } else if (tool === 'suelo') {
     const h = hitAt(cx, cy); if (!h || h.type !== 'module') return;
     const face = h.face === 'top' ? 'top' : 'bottom';
-    store.mutate(s => { const m = moduleById(s, h.m.id); if (m.floors[face]) delete m.floors[face]; else m.floors[face] = s.settings.colorSuelo; });
+    store.mutate(s => {
+      const m = moduleById(s, h.m.id); m.floorShapes = m.floorShapes || {};
+      if (m.floors[face]) { delete m.floors[face]; delete m.floorShapes[face]; }
+      else { m.floors[face] = s.settings.colorSuelo; if (ui.floorShape.kind !== 'full') m.floorShapes[face] = { ...ui.floorShape }; else delete m.floorShapes[face]; }
+    });
   } else if (tool === 'red') {
     const h = hitAt(cx, cy); if (!h || h.type !== 'module' || h.face === 'top' || h.face === 'bottom') return;
     store.mutate(s => { const m = moduleById(s, h.m.id); if (m.nets[h.face]) delete m.nets[h.face]; else m.nets[h.face] = s.settings.colorRed; });
@@ -382,11 +386,7 @@ function deleteThing(s, sel) {
   else if (sel.kind === 'module') s.modules = s.modules.filter(m => m.id !== sel.id);
   else if (sel.kind === 'floor') { const { id, face } = splitKey(sel.key); const m = moduleById(s, id); if (m) delete m.floors[face]; }
   else if (sel.kind === 'net') { const { id, face } = splitKey(sel.key); const m = moduleById(s, id); if (m) delete m.nets[face]; }
-  else if (sel.kind === 'tube') { // borrar tubo = borrar los módulos que lo usan
-    const t = park.structure.tubes.find(q => q.key === sel.key); if (!t) return;
-    const ids = new Set(modulesWithTube(s, t).map(m => m.id));
-    s.modules = s.modules.filter(m => !ids.has(m.id));
-  }
+  else if (sel.kind === 'tube') { s.hiddenTubes = s.hiddenTubes || {}; s.hiddenTubes[sel.key] = true; } // quitar solo ese tramo
 }
 
 // ---------- teclado ----------
@@ -422,5 +422,5 @@ ui.setTool('select');
 sc.resetView(park.worldBox());
 initCloud();
 buildAllThumbs(sc.renderer, (type, url) => ui.setThumb(type, url));
-window.__bk = { sc, store, park, ui, setSelection, get selection() { return selection; } };
+window.__bk = { sc, store, park, ui, setSelection, THREE, get selection() { return selection; } };
 (function loop() { requestAnimationFrame(loop); sc.render(); })();

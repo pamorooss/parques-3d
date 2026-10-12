@@ -7,9 +7,10 @@ export function newState() {
   return {
     version: 3,
     settings: { ...DEFAULT_SETTINGS },
-    modules: [],        // { id, x, y, z, w, h, d, floors: { top?: color, bottom?: color }, nets: { '+x'?: color, ... } }
-    coquillaColors: {}, // tubeKey -> colorId
-    elements: [],       // { id, type, x, y, z (m, mundo; y = altura de la base), r, colors: {} }
+    modules: [],        // { id, x, y, z, w, h, d, floors: { top?: color, bottom?: color }, floorShapes: { top?: { kind: 'half'|'tri', r: 0..3 } }, nets: { '+x'?: color, ... } }
+    coquillaColors: {}, // tubeKey -> colorId ('sin' = tubo sin coquilla)
+    hiddenTubes: {},    // tubeKey -> true (tramos de tubo quitados a mano)
+    elements: [],       // { id, type, x, y, z (m, mundo; y = altura de la base), r, colors: {}, estilo?, size?: {l,a,h} cm }
     prices: {},         // key -> precio unitario (override)
     nextId: 1,
   };
@@ -58,7 +59,7 @@ export class Store {
 // Migración de formatos antiguos (v1: rejilla fija; v2: rejilla con medidas por fila/columna).
 function migrate(st) {
   const v = st.version || 1;
-  if (v >= 3) { st.modules = st.modules || []; return st; }
+  if (v >= 3) { st.modules = st.modules || []; st.hiddenTubes = st.hiddenTubes || {}; for (const m of st.modules) { m.floors = m.floors || {}; m.nets = m.nets || {}; m.floorShapes = m.floorShapes || {}; } return st; }
   const s = st.settings, grid = st.grid || { x: {}, y: {}, z: {} };
   const size = (ax, i) => ((grid[ax] && grid[ax][i]) > 0 ? grid[ax][i] : (ax === 'y' ? s.altura : s.vano)) / 100;
   const pos = (ax, i) => { let p = 0; if (i >= 0) for (let k = 0; k < i; k++) p += size(ax, k); else for (let k = i; k < 0; k++) p -= size(ax, k); return p; };
@@ -127,6 +128,10 @@ export function faceRect(m, face) {
   if (face[1] === 'x') return { axis: 'x', at: face === '+x' ? m.x + m.w : m.x, u0: m.z, u1: m.z + m.d, v0: m.y, v1: m.y + m.h };
   return { axis: 'z', at: face === '+z' ? m.z + m.d : m.z, u0: m.x, u1: m.x + m.w, v0: m.y, v1: m.y + m.h };
 }
+// Forma de una plataforma: 'full' (entera), 'half' (mitad) o 'tri' (triángulo), con giro r (0..3).
+export const FLOOR_SHAPES = [{ id: 'full', name: 'Entera' }, { id: 'half', name: 'Mitad' }, { id: 'tri', name: 'Triángulo' }];
+export function floorShape(m, face) { const fs = m.floorShapes && m.floorShapes[face]; return fs && fs.kind && fs.kind !== 'full' ? { kind: fs.kind, r: (fs.r || 0) % 4 } : { kind: 'full', r: 0 }; }
+export const floorAreaFactor = sh => sh.kind === 'full' ? 1 : 0.5;
 export const rectKey = r => `${r.axis}|${cm(r.at)}|${cm(r.u0)}|${cm(r.u1)}|${cm(r.v0)}|${cm(r.v1)}`;
 
 export function bounds(state) {
