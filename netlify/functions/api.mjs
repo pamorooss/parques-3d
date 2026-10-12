@@ -28,6 +28,11 @@ export default async (req) => {
   const path = url.pathname.replace(/^\/api\/?/, '');
   const parts = path.split('/').filter(Boolean);
 
+  // Diagnóstico sin secretos: ¿están las variables y tienen la pinta esperada?
+  if (parts[0] === 'health') {
+    const c = creds();
+    return json({ version: 3, userSet: !!c.user, passSet: !!c.pass, userOk: c.user.toLowerCase() === 'bolakids', passLen: c.pass.length, rawUserLen: (process.env.APP_USER || '').length, rawPassLen: (process.env.APP_PASS || '').length });
+  }
   if (parts[0] === 'login' && req.method === 'POST') {
     const c = creds();
     if (!c.user || !c.pass) return json({ error: 'Faltan APP_USER y APP_PASS en las variables de entorno de Netlify.' }, 503);
