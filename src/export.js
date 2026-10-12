@@ -36,7 +36,7 @@ export function openFicha(state, budget, imgUrl, dimsText) {
   const rows = budget.groups.map(g => `
     <tr class="g"><td colspan="5">${g.name}</td></tr>
     ${g.lines.map(l => `<tr><td>${l.concepto}${l.detalle ? `<div class="d">${l.detalle}</div>` : ''}</td><td class="n">${l.cantidad}</td><td>${l.unidad}</td><td class="n">${l.pendiente ? '<span class="p">pendiente</span>' : eur(l.precio)}</td><td class="n">${eur(l.importe)}</td></tr>`).join('')}`).join('');
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${s.nombre} · BolaKids</title>
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${s.nombre} · Ficha del parque</title>
   <style>
     body{font-family:Helvetica,Arial,sans-serif;color:#1b1f24;margin:0;padding:28px 36px;max-width:960px}
     header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #2b7fff;padding-bottom:10px}
@@ -60,7 +60,7 @@ export function openFicha(state, budget, imgUrl, dimsText) {
   ${s.margen ? `<tr class="tot"><td colspan="4" class="n">Margen ${s.margen}%</td><td class="n">${eur(budget.margen)}</td></tr>` : ''}
   <tr class="tot"><td colspan="4" class="n">IVA ${s.iva}%</td><td class="n">${eur(budget.iva)}</td></tr>
   <tr class="tot big"><td colspan="4" class="n">TOTAL</td><td class="n">${eur(budget.total)}</td></tr></tbody></table>
-  <p class="note">${budget.pendientes ? `${budget.pendientes} partidas sin precio (pendiente de tarifa). ` : ''}${budget.estimadas ? `${budget.estimadas} partidas con precio estimado. ` : ''}Diseño y fabricación conforme a UNE-EN 1176-1, 1176-3 y 1176-10. Colores según carta PVC ignífugo BolaKids. Presupuesto orientativo, validez 30 días.</p>
+  <p class="note">${budget.pendientes ? `${budget.pendientes} partidas sin precio (pendiente de tarifa). ` : ''}${budget.estimadas ? `${budget.estimadas} partidas con precio estimado. ` : ''}Diseño y fabricación conforme a UNE-EN 1176-1, 1176-3 y 1176-10. Colores según carta de PVC ignífugo. Presupuesto orientativo, validez 30 días.</p>
   </body></html>`;
   const w = window.open('', '_blank');
   w.document.write(html); w.document.close();

@@ -2,6 +2,10 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  # El usuario de acceso no es un secreto: evita que el escáner de secretos de Netlify tumbe el build si aparece en algún texto.
+  SECRETS_SCAN_OMIT_KEYS = "APP_USER"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

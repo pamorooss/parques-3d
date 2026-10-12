@@ -1,4 +1,4 @@
-# BolaKids 3D · Diseñador de parques infantiles
+# Diseñador de parques infantiles 3D
 
 MVP de herramienta tipo "juego de construcción" para montar parques de bolas en 3D,
 sacar la imagen para el cliente, las cotas y un presupuesto a partir de las piezas colocadas.

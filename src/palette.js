@@ -1,4 +1,4 @@
-// Paletas de color reales de BolaKids.
+// Paletas de color reales del fabricante.
 // PVC ignífugo, coquillas y bridas: 12 colores (documento de la clienta).
 export const PVC = [
   { id: 'negro',    name: 'Negro',    hex: '#1a1a1a' },
