@@ -5,6 +5,7 @@ import { computeBudget } from './budget.js';
 import { moduleById, localSettings, faceRect, cm, r3, FLOOR_SHAPES, floorShape } from './state.js';
 import { unionName, hiddenTubesOf } from './structure.js';
 import { ICONS } from './icons.js';
+import { PRESETS, SKINS, HAIRS } from './avatar.js';
 
 export const TOOLS = [
   { id: 'select',     name: 'Seleccionar', key: 'V', hint: 'Clic en una pieza, tubo o módulo para editarlo (medidas, posición, color). R gira, Supr borra. Arrastra para orbitar, rueda para zoom, botón derecho para desplazar.' },
@@ -13,6 +14,7 @@ export const TOOLS = [
   { id: 'red',        name: 'Red',         key: 'N', hint: 'Clic en una cara lateral de un módulo: pone o quita la red de protección.' },
   { id: 'pintar',     name: 'Pintar',      key: 'P', hint: 'Clic en cualquier pieza (coquilla, red, plataforma, juego) para aplicarle el color actual.' },
   { id: 'borrar',     name: 'Borrar',      key: 'X', hint: 'Clic en cualquier pieza para eliminarla. En un tubo quita solo ese tramo; en un módulo, el módulo entero.' },
+  { id: 'persona',    name: 'Persona · modo visita', key: 'A', hint: 'Clic en el suelo o en una plataforma para soltar a la persona y recorrer el parque: andar, subir escaleras, tirarse por los toboganes y meterse en las bolas. Esc para volver a editar.' },
 ];
 
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
@@ -26,6 +28,7 @@ export class UI {
     this.placeColors = {}; this.placeStyle = {}; this.selection = null; this.tab = 'pieza';
     this.moduleDims = null; // medidas (cm) del próximo módulo a colocar: { ancho, fondo, alto }
     this.floorShape = { kind: 'full', r: 0 }; // forma de las próximas plataformas
+    this.persona = { preset: 'peque', camiseta: 'rojo', pantalon: 'azul', piel: SKINS[0].id, pelo: HAIRS[0].id }; // persona del modo visita
     this.el = {
       tools: document.getElementById('tools'), catalog: document.getElementById('catalog'), colorBox: document.getElementById('colorBox'),
       pieza: document.getElementById('tab-pieza'), presupuesto: document.getElementById('tab-presupuesto'), ajustes: document.getElementById('tab-ajustes'),
@@ -134,11 +137,31 @@ export class UI {
       box.appendChild(h('label', '', 'PVC de la plataforma')); box.appendChild(this.swatches(PVC, s.colorSuelo, set('colorSuelo')));
     }
     else if (this.tool === 'pintar') { box.appendChild(h('label', '', 'Color a aplicar')); box.appendChild(this.swatches(PVC, this.paintColor, id => { this.paintColor = id; this.renderColorBox(); })); }
+    else if (this.tool === 'persona') this.renderPersona(box);
     else if (this.tool === 'place') {
       const d = ELEMENTS[this.placeType]; const pc = this.placeColors[this.placeType];
       const style = this.placeStyle[this.placeType] || d.estilo || 'liso';
       this.colorSlots(box, d, pc, style, (k, id) => { pc[k] = id; this.renderColorBox(); }, st => { this.placeStyle[this.placeType] = st; this.renderColorBox(); });
     } else box.appendChild(h('div', 'muted', 'Elige Módulo, Red, Plataforma, Pintar o una pieza del catálogo para ver sus colores.'));
+  }
+
+  // Persona del modo visita: tamaño (escala real), ropa, piel y pelo.
+  renderPersona(box) {
+    const o = this.persona; const pick = k => id => { o[k] = id; this.renderColorBox(); };
+    box.appendChild(h('label', '', 'Tamaño de la persona (escala real)'));
+    box.appendChild(this.segmented(PRESETS, o.preset, pick('preset')));
+    box.appendChild(h('label', '', `Camiseta: <b>${nameOf(o.camiseta)}</b>`)); box.appendChild(this.swatches(PVC, o.camiseta, pick('camiseta')));
+    box.appendChild(h('label', '', `Pantalón: <b>${nameOf(o.pantalon)}</b>`)); box.appendChild(this.swatches(PVC, o.pantalon, pick('pantalon')));
+    const mini = (pal, cur, k) => { const w = this.swatches(pal, cur, pick(k)); w.classList.add('mini'); return w; };
+    box.appendChild(h('label', '', 'Piel')); box.appendChild(mini(SKINS, o.piel, 'piel'));
+    box.appendChild(h('label', '', 'Pelo')); box.appendChild(mini(HAIRS, o.pelo, 'pelo'));
+    if (this.actions.hasAvatar && this.actions.hasAvatar()) {
+      const row = h('div', 'row');
+      const go = h('button', 'primary', 'Pasear con la persona'); go.onclick = () => this.actions.visit('enter');
+      const rm = h('button', 'danger', 'Quitar persona'); rm.onclick = () => { this.actions.visit('remove'); this.renderColorBox(); };
+      row.append(go, rm); box.appendChild(row);
+    }
+    box.appendChild(h('p', 'muted', 'Haz clic en el suelo o en una plataforma para soltarla. Entras en el modo visita: WASD o flechas para andar, Mayús para correr, Espacio para saltar, arrastra para mirar y C para ver con sus ojos. Baja por los toboganes y métete en las bolas. Esc para salir.'));
   }
 
   // ---------- selección ----------
@@ -199,6 +222,13 @@ export class UI {
       const note = h('p', 'muted', custom ? `Medidas personalizadas (de serie ${def.l} × ${def.a} × ${def.h} cm). ` : 'Medidas de serie: cambia cualquiera y el modelo 3D y el presupuesto se adaptan. ');
       if (custom) { const rb = h('button', 'link', 'Restablecer'); rb.onclick = () => mutate(x => { delete getEl(x).size; }); note.appendChild(rb); }
       box.appendChild(note);
+      if (d.texto) {
+        const w = h('div', 'field'); w.appendChild(h('label', '', 'Texto del rótulo (vacío = nombre del parque)'));
+        const inp = h('input'); inp.type = 'text'; inp.value = el.texto || ''; inp.placeholder = st.settings.nombre; inp.spellcheck = false;
+        inp.onchange = () => mutate(x => { const e = getEl(x); if (inp.value.trim()) e.texto = inp.value.trim(); else delete e.texto; });
+        inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
+        w.appendChild(inp); box.appendChild(w);
+      }
       // Posición
       box.appendChild(h('label', '', 'Posición (cm)'));
       const pos = h('div', 'row dims');

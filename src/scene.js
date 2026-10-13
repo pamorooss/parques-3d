@@ -33,12 +33,13 @@ export function createScene(container) {
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.userData = { type: 'ground' };
   scene.add(ground);
 
-  let grid = null;
+  let grid = null, gridVisible = true;
+  function setGridVisible(v) { gridVisible = v; if (grid) grid.visible = v; }
   function setGrid(V) {
     if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
     const n = 40;
     grid = new THREE.GridHelper(n * V, n, 0xa9a69c, 0xc6c3b9);
-    grid.position.y = 0.002;
+    grid.position.y = 0.002; grid.visible = gridVisible;
     // centrar la rejilla en las líneas de módulo
     grid.position.x = (n % 2) * V / 2; grid.position.z = (n % 2) * V / 2;
     scene.add(grid);
@@ -70,6 +71,7 @@ export function createScene(container) {
     camera.position.set(c.x + d * 0.7, size.y + d * 0.55, c.z + d * 0.8);
   }
 
-  function render() { controls.update(); renderer.render(scene, camera); }
-  return { renderer, scene, camera, controls, ground, setGrid, pick, resize, render, resetView };
+  // En modo visita o vuelo la cámara la mueve otro: OrbitControls queda desactivado y no se actualiza.
+  function render() { if (controls.enabled) controls.update(); renderer.render(scene, camera); }
+  return { renderer, scene, camera, controls, ground, setGrid, setGridVisible, pick, resize, render, resetView };
 }

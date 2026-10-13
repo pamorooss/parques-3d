@@ -4,7 +4,7 @@ function download(name, blob) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }
-const safe = n => (n || 'parque').replace(/[^\w\dáéíóúñü -]/gi, '').trim().replace(/\s+/g, '_');
+export const safe = n => (n || 'parque').replace(/[^\w\dáéíóúñü -]/gi, '').trim().replace(/\s+/g, '_');
 const esc = s => String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
 export function saveJSON(state) {
@@ -29,7 +29,7 @@ export function saveCSV(state, budget) {
 }
 
 const eur = n => n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
-const LOGO = new URL(`${import.meta.env.BASE_URL || "/"}logo-bolakids.png`, location.href).href;
+export const LOGO = new URL(`${import.meta.env.BASE_URL || "/"}logo-bolakids.png`, location.href).href;
 
 // Presupuesto / ficha para el cliente: documento imprimible (PDF) con el logo de BolaKids,
 // imagen 3D, medidas y desglose por capítulos. Mismo formato siempre.

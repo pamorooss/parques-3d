@@ -200,3 +200,43 @@ table.budget button.reset { padding: 0 6px; margin-left: 2px; border: none; back
 table.budget button.reset:hover { color: var(--danger); }
 table.budget td small { color: var(--muted); font-size: 10px; }
 table.budget tr.g td.n { color: var(--accent-dark); font-weight: 600; font-size: 12px; }
+
+/* ---------- persona, modo visita y vídeo ---------- */
+.tool[data-tool="persona"] { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 10px; background: #fdf1f6; border-color: #f3d3e2; }
+.tool[data-tool="persona"] svg { color: #c0145a; }
+.tool[data-tool="persona"].active { background: linear-gradient(160deg, #d8266f, #c0145a); border-color: #c0145a; box-shadow: 0 6px 14px rgba(192,20,90,.25); }
+.tool[data-tool="persona"].active svg { color: #fff; }
+.pop { position: absolute; top: 14px; right: 14px; width: 330px; max-width: calc(100% - 28px); background: rgba(255,255,255,.97); border-radius: 16px; padding: 14px 16px 12px; box-shadow: 0 10px 34px rgba(30,34,31,.18); backdrop-filter: blur(8px); z-index: 5; border: 1px solid rgba(255,255,255,.7); }
+.pop[hidden] { display: none; }
+.popHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.popHead b { font-size: 14px; }
+.pop .close { padding: 4px 10px; font-size: 12px; }
+.pop .opt { padding: 8px 0; border-top: 1px solid var(--line2); }
+.pop .opt label { margin: 0 0 6px; }
+.pop .opt .row { margin: 0; }
+.pop .opt select { width: auto; padding: 7px 10px; }
+.pop .opt button { width: 100%; }
+.pop .opt .row button { flex: 1; }
+.pop .chk { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: 12px; color: var(--text); cursor: pointer; }
+.pop .chk input { margin: 0; }
+.pop p.muted { margin: 10px 0 0; font-size: 11px; line-height: 1.4; }
+#recBadge { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: rgba(30,34,31,.86); color: #fff; border-radius: 999px; font-weight: 700; font-size: 12px; letter-spacing: .04em; z-index: 6; box-shadow: var(--shadow); font-variant-numeric: tabular-nums; }
+#recBadge[hidden] { display: none; }
+#recBadge .dot { width: 10px; height: 10px; border-radius: 50%; background: #ff3b30; box-shadow: 0 0 0 0 rgba(255,59,48,.6); animation: recpulse 1.2s infinite; }
+@keyframes recpulse { 0% { box-shadow: 0 0 0 0 rgba(255,59,48,.6); } 70% { box-shadow: 0 0 0 8px rgba(255,59,48,0); } 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); } }
+#recBadge button { padding: 5px 10px; border: none; border-radius: 999px; background: #ff3b30; color: #fff; font-weight: 700; font-size: 11px; margin-left: 4px; }
+#recBadge button:hover { background: #e0291f; }
+#visitHud { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; padding: 10px 14px; background: rgba(255,255,255,.95); border-radius: 16px; box-shadow: 0 6px 24px rgba(30,34,31,.14); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.7); max-width: calc(100% - 28px); flex-wrap: wrap; justify-content: center; }
+#visitHud[hidden] { display: none; }
+#visitHud .keys { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+#visitHud .btns { display: flex; gap: 6px; }
+#visitHud .btns button { padding: 7px 12px; font-size: 12px; font-weight: 600; border-radius: 999px; }
+#visitHud #visitRec { color: #c0145a; border-color: #f3c6d8; }
+#visitHud #visitRec.on { background: #ff3b30; color: #fff; border-color: #ff3b30; }
+#visitHud #visitExit { background: var(--accent-dark); color: #fff; border-color: var(--accent-dark); }
+#viewport.visiting canvas { cursor: grab; }
+#viewport.visiting canvas:active { cursor: grabbing; }
+.swatches.mini .swatch { width: 20px; height: 20px; }
+#visitHud .btns button, .pop button, #recBadge button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+#visitHud .btns button svg, .pop button svg { width: 15px; height: 15px; flex: none; }
+#visitHud #visitRec.on svg { color: #fff; }

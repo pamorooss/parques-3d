@@ -35,6 +35,7 @@
         <button data-action="dims" title="Mostrar u ocultar cotas"></button>
       </div>
       <button data-action="photo" class="pill" title="Descargar imagen PNG de la vista actual"><span>Foto</span></button>
+      <button data-action="video" class="pill" title="Grabar un vídeo del parque: vuelo 360°, lo que veas en pantalla o un paseo con la persona"><span>Vídeo</span></button>
       <button data-action="ficha" class="pill primary" title="Ficha para el cliente: imagen + cotas + presupuesto (imprimir / PDF)"><span>Ficha</span></button>
       <input type="file" id="fileInput" hidden accept=".json,application/json">
     </header>
@@ -72,6 +73,36 @@
           </select>
         </div>
         <div class="col name"><span id="movepadName"></span></div>
+      </div>
+      <div id="videoPanel" class="pop" hidden>
+        <div class="popHead"><b>Vídeo del parque</b><button type="button" class="close" data-close>Cerrar</button></div>
+        <div class="opt">
+          <label>Vuelo 360° alrededor del parque</label>
+          <div class="row">
+            <select id="flightDur" title="Duración de la vuelta"><option value="8">8 s</option><option value="12" selected>12 s</option><option value="20">20 s</option><option value="30">30 s</option></select>
+            <button type="button" class="primary" id="btnFlight">Grabar vuelo</button>
+          </div>
+        </div>
+        <div class="opt">
+          <label>Paseo con la persona (ver el parque desde dentro)</label>
+          <button type="button" id="btnWalkRec">Soltar una persona y grabar el paseo</button>
+        </div>
+        <div class="opt">
+          <label>Grabación libre de lo que veas en pantalla</label>
+          <button type="button" id="btnRec">Empezar a grabar</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="optOverlay" checked> Nombre del parque y logo en el vídeo</label>
+        <label class="chk"><input type="checkbox" id="optGrid" checked> Ocultar la rejilla del suelo</label>
+        <p class="muted" id="videoNote"></p>
+      </div>
+      <div id="recBadge" hidden><span class="dot"></span><span>REC</span><span id="recTime">00:00</span><button type="button" id="recStop">Parar y descargar</button></div>
+      <div id="visitHud" hidden>
+        <div class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> o flechas: andar · <kbd>Mayús</kbd> correr · <kbd>Espacio</kbd> saltar · arrastra: mirar · rueda: acercar</div>
+        <div class="btns">
+          <button type="button" id="visitCam" title="Cambiar entre ver a la persona y ver con sus ojos (C)">Cámara: 3ª persona</button>
+          <button type="button" id="visitRec" title="Grabar el paseo en vídeo">Grabar</button>
+          <button type="button" id="visitExit" title="Volver a editar (Esc)">Salir</button>
+        </div>
       </div>
     </main>
     <aside id="right">

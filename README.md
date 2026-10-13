@@ -43,6 +43,20 @@ npm run dev     # abre http://localhost:5173
 - **Foto** descarga un PNG; **Ficha** abre el presupuesto para el cliente con el logo de BolaKids
   (imagen 3D, medidas, desglose por capítulos y totales) listo para imprimir o guardar como PDF. La
   referencia y la validez se ponen en Ajustes. El logo está en `public/logo-bolakids.png`.
+- **Rótulo con el nombre** (catálogo, "Rótulo y personalización"): cartel con el nombre del parque (o el texto
+  que se escriba en la pieza) con fondo, letras y borde a elegir. Sobre un módulo va encima de la estructura;
+  en el suelo lleva dos postes. Cambia solo cuando se cambia el nombre del parque.
+- **Persona · modo visita (A)**: clic en el suelo o en una plataforma para soltar a una persona a escala real
+  (peque 1,15 m, mayor 1,40 m o adulto 1,70 m; ropa, piel y pelo a elegir). Se entra en el modo visita:
+  **WASD** o flechas para andar, **Mayús** correr, **Espacio** saltar, arrastrar para mirar, rueda para
+  acercar y **C** para ver con sus ojos. Sube escaleras y rampas, choca con redes, tubos y paredes, se tira
+  por los toboganes (sentada, con velocidad) y entra en las piscinas y bolas (más despacio, brazos arriba);
+  los sacos, cortinas y cuerdas se atraviesan. **Esc** vuelve a editar; la persona se queda en el parque
+  como referencia de escala hasta que se quita.
+- **Vídeo**: graba la vista 3D en MP4 (o WebM según navegador) sin la interfaz y con el nombre del parque
+  y el logo incrustados (opcional). Tres modos: **vuelo 360°** automático alrededor del parque (8–30 s),
+  **paseo con la persona** (suelta la persona y graba el recorrido) y **grabación libre** de lo que se vea
+  (orbitar, visitar…). Se descarga al parar; máximo 3 minutos.
 - **Guardar / Abrir** exporta e importa el parque en `.json`. El trabajo en curso se guarda solo en el navegador.
 
 ## Nube y acceso
@@ -70,3 +84,4 @@ Desplegado en Netlify, la app pide usuario y contraseña y guarda los parques en
 - `src/catalog.js` piezas, medidas y presupuesto · `src/palette.js` cartas de color reales
 - `src/budget.js` presupuesto y optimización de corte de coquillas y tubo
 - `src/models.js` geometría procedural de cada pieza · `src/render.js` escena · `src/ui.js` paneles
+- `src/avatar.js` persona de bloques y posturas · `src/visit.js` modo visita (física por rayos: suelo y escalones, paredes, toboganes `userData.slide`, zonas de bolas; piezas `pass` se atraviesan) · `src/video.js` grabación con MediaRecorder (canvas intermedio con rótulo y logo) y vuelo 360°

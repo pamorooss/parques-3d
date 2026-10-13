@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS } from './config.js';
 // Miniaturas del catálogo: cada pieza se construye con el mismo modelo 3D que en el
 // parque y se renderiza en pequeño (fondo transparente) usando el renderer principal.
 const W = 256, H = 192;
-const settings = { ...DEFAULT_SETTINGS, vano: 100, fondo: 100, altura: 150, caida: 0 };
+const settings = { ...DEFAULT_SETTINGS, nombre: 'Mi parque', vano: 100, fondo: 100, altura: 150, caida: 0 };
 let rt, scene, camera, buf, canvas, ctx2d;
 
 function setup() {

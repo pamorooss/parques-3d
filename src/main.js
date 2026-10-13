@@ -10,7 +10,10 @@ import { ICONS } from './icons.js';
 import { cloud } from './cloud.js';
 import { buildAllThumbs } from './thumbs.js';
 import { computeBudget } from './budget.js';
-import { saveJSON, snapshotPNG, savePhoto, saveCSV, openFicha } from './export.js';
+import { saveJSON, snapshotPNG, savePhoto, saveCSV, openFicha, LOGO, safe } from './export.js';
+import { Visitor } from './visit.js';
+import { presetById } from './avatar.js';
+import { Recorder, Flight, downloadBlob, extFor } from './video.js';
 
 const AUTOSAVE = 'bolakids3d:autosave';
 const SNAP = 0.05;            // redondeo fino (m)
@@ -21,6 +24,11 @@ const sc = createScene(document.getElementById('viewport'));
 const park = new ParkRenderer(sc.scene);
 const dims = new Dims(sc.scene);
 let selection = null;
+// Modo visita (persona que recorre el parque), grabación de vídeo y vuelo 360°.
+const visitor = new Visitor(sc, { onEnter: () => visitUI(true), onExit: () => visitUI(false), onCamera: () => updateVisitButtons() });
+const recorder = new Recorder(sc);
+const flight = new Flight(sc);
+const logoImg = new Image(); logoImg.src = LOGO;
 
 // ---------- parque de ejemplo ----------
 function demoState() {
@@ -31,9 +39,9 @@ function demoState() {
   const g = {}, u = {};
   for (let x = 0; x < 3; x++) for (let z = 0; z < 2; z++) { g[`${x},${z}`] = mod(x, 0, z); u[`${x},${z}`] = mod(x, 1.5, z); }
   for (const m of Object.values(g)) m.floors.top = 'azul';
-  for (let x = 0; x < 3; x++) { u[`${x},0`].nets['-z'] = 'negro'; u[`${x},1`].nets['+z'] = 'negro'; }
+  for (let x = 0; x < 3; x++) { if (x !== 1) u[`${x},0`].nets['-z'] = 'negro'; u[`${x},1`].nets['+z'] = 'negro'; } // hueco en (1,0): sale el tobogán
   for (let z = 0; z < 2; z++) { u[`0,${z}`].nets['-x'] = 'negro'; g[`0,${z}`].nets['-x'] = 'negro'; }
-  u['2,1'].nets['+x'] = 'negro'; g['1,1'].nets['+z'] = 'azul';
+  u['2,0'].nets['+x'] = 'negro'; g['1,1'].nets['+z'] = 'azul'; // en (2,1) +x no hay red: entra la rampa
   const add = (type, x, y, z, r = 0, colors = {}) => s.elements.push({ id: id++, type, x: x + 0.5, y, z: z + 0.5, r, colors: { ...defaultColors(type), ...colors } });
   add('piscina', 0, 0, 0, 0, { borde: 'rojo' }); add('piscina', 0, 0, 1, 0, { borde: 'rojo' });
   add('tobogan_recto', 1, 1.5, 0, 0, { color: 'amarillo' });
@@ -49,7 +57,9 @@ const ui = new UI(store, {
   topbar: handleTopbar,
   clearSelection: () => setSelection(null),
   tube: key => park.structure && park.structure.tubes.find(t => t.key === key),
-  onToolChange: () => { if (ui.tool !== 'select') setSelection(null); park.hideGhost(); },
+  onToolChange: () => { if (ui.tool !== 'select') setSelection(null); park.hideGhost(); if (visitor.active && ui.tool !== 'persona') visitor.exit(); },
+  hasAvatar: () => !!visitor.avatar,
+  visit: what => { if (what === 'enter') visitor.enter(); else if (what === 'remove') visitor.remove(); },
 });
 
 function setSelection(sel) {
@@ -123,6 +133,7 @@ function refreshSelectionVisuals() {
 
 store.subscribe(state => {
   park.rebuild(state);
+  visitor.setWorld(collidables(), ballZones(state));
   sc.setGrid(1);
   refreshSelectionVisuals();
   ui.refresh();
@@ -211,6 +222,7 @@ function handleTopbar(action) {
   else if (action === 'view') sc.resetView(park.worldBox());
   else if (action === 'dims') store.mutate(s => { s.settings.mostrarCotas = !s.settings.mostrarCotas; });
   else if (action === 'photo') savePhoto(st, takePhoto());
+  else if (action === 'video') toggleVideoPanel();
   else if (action === 'csv') saveCSV(st, computeBudget(st));
   else if (action === 'ficha') {
     const b = bounds(st);
@@ -235,14 +247,14 @@ document.getElementById('fileInput').onchange = ev => {
 const canvas = sc.renderer.domElement;
 let down = null;
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now(), b: e.button }; });
+canvas.addEventListener('pointerdown', e => { if (visitor.active || flight.active) return; down = { x: e.clientX, y: e.clientY, t: performance.now(), b: e.button }; });
 canvas.addEventListener('pointerup', e => {
-  if (!down) return;
+  if (!down || visitor.active || flight.active) { down = null; return; }
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
   if (moved < 5 && performance.now() - down.t < 500) handleClick(e.clientX, e.clientY, down.b);
   down = null;
 });
-canvas.addEventListener('pointermove', e => { if (!down) handleHover(e.clientX, e.clientY); });
+canvas.addEventListener('pointermove', e => { if (!down && !visitor.active && !flight.active) handleHover(e.clientX, e.clientY); });
 canvas.addEventListener('pointerleave', () => park.hideGhost());
 
 const pickObjs = () => [...park.pickGroup.children, sc.ground];
@@ -333,6 +345,8 @@ function handleHover(cx, cy) {
     const h = hitAt(cx, cy); if (h && h.type === 'module') park.setGhost({ box: faceBox(h.m, h.face === 'top' ? 'top' : 'bottom'), shape: ui.floorShape });
   } else if (tool === 'red') {
     const h = hitAt(cx, cy); if (h && h.type === 'module' && h.face !== 'top' && h.face !== 'bottom') park.setGhost({ box: faceBox(h.m, h.face) });
+  } else if (tool === 'persona') {
+    const pt = personaPoint(hitAt(cx, cy)); if (pt) park.setGhost({ box: { x0: pt.x - 0.2, y0: pt.y, z0: pt.z - 0.2, w: 0.4, h: presetById(ui.persona.preset).h, d: 0.4 }, color: 0xe1248c });
   }
   canvas.style.cursor = (tool === 'select' || tool === 'pintar' || tool === 'borrar') && (pieceAt(cx, cy) || (hitAt(cx, cy) || {}).type === 'module') ? 'pointer' : 'default';
 }
@@ -378,8 +392,39 @@ function handleClick(cx, cy, button) {
     const r = pieceAt(cx, cy);
     if (r) setSelection(pieceToSelection(r));
     else { const h = hitAt(cx, cy); setSelection(h && h.type === 'module' ? { kind: 'module', id: h.m.id } : null); }
+  } else if (tool === 'persona') {
+    const pt = personaPoint(hitAt(cx, cy)); if (!pt) return;
+    const o = ui.persona;
+    visitor.place(pt, presetById(o.preset), { camiseta: o.camiseta, pantalon: o.pantalon, piel: o.piel, pelo: o.pelo });
+    park.hideGhost(); visitor.enter();
+    if (recOnPlace) { recOnPlace = false; startRec(); }
+    return;
   }
   handleHover(cx, cy);
+}
+// Dónde se suelta a la persona: en el suelo o sobre la tapa de un módulo (si no hay plataforma, cae al nivel de abajo).
+function personaPoint(h) {
+  if (!h) return null;
+  if (h.type === 'ground') return new THREE.Vector3(h.point.x, 0, h.point.z);
+  if (h.face === 'top') return new THREE.Vector3(h.point.x, r3(h.m.y + h.m.h), h.point.z);
+  return null;
+}
+// Mallas del parque con las que choca o se pisa la persona (las piezas blandas marcadas `pass` no cuentan; las bolas van por zonas).
+function collidables() {
+  const list = [sc.ground];
+  park.root.traverse(o => { if (o.isMesh && !o.isInstancedMesh && !o.userData.pass) list.push(o); });
+  return list;
+}
+function ballZones(state) {
+  const zones = [];
+  for (const el of state.elements) {
+    if (el.type !== 'piscina' && el.type !== 'bolas') continue;
+    const d = elementDims(el, localSettings(state, el));
+    const l = (el.r % 2 ? d.a : d.l) / 100, a = (el.r % 2 ? d.l : d.a) / 100, h = d.h / 100;
+    const layers = el.type === 'piscina' ? Math.max(1, Math.min(6, Math.round(h / 0.13))) : Math.max(1, Math.round(h / 0.075));
+    zones.push({ x0: el.x - l / 2, x1: el.x + l / 2, z0: el.z - a / 2, z1: el.z + a / 2, base: el.y, top: el.y + 0.09 + 0.075 * (layers - 1) + 0.09 });
+  }
+  return zones;
 }
 function deleteThing(s, sel) {
   if (sel.kind === 'element') s.elements = s.elements.filter(q => q.id !== sel.id);
@@ -395,6 +440,7 @@ window.addEventListener('keydown', e => {
   if (!cloudModal.hidden) { if (e.key === 'Escape') cloudModal.hidden = true; return; }
   const tag = (e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+  if (visitor.active && visitor.keydown(e)) return;
   const k = e.key.toLowerCase();
   if ((e.metaKey || e.ctrlKey) && k === 'z') { e.preventDefault(); e.shiftKey ? store.redo() : store.undo(); return; }
   if (k === 'escape') { ui.setTool('select'); return; }
@@ -410,9 +456,93 @@ window.addEventListener('keydown', e => {
     const sel = selection; store.mutate(s => deleteThing(s, sel));
     setSelection(null); return;
   }
-  const map = { v: 'select', e: 'estructura', s: 'suelo', n: 'red', p: 'pintar', x: 'borrar' };
+  const map = { v: 'select', e: 'estructura', s: 'suelo', n: 'red', p: 'pintar', x: 'borrar', a: 'persona' };
   if (map[k]) ui.setTool(map[k]);
 });
+window.addEventListener('keyup', e => visitor.keyup(e));
+
+// ---------- modo visita: HUD ----------
+const viewportEl = document.getElementById('viewport'), visitHud = document.getElementById('visitHud');
+const visitCamBtn = document.getElementById('visitCam'), visitRecBtn = document.getElementById('visitRec');
+visitCamBtn.insertAdjacentHTML('afterbegin', ICONS.cam); visitRecBtn.insertAdjacentHTML('afterbegin', ICONS.rec);
+function visitUI(on) {
+  visitHud.hidden = !on; viewportEl.classList.toggle('visiting', on);
+  if (on) { park.hideGhost(); setSelection(null); movepad.hidden = true; ui.setHint('Modo visita: pasea por el parque con WASD o las flechas, salta con Espacio, tírate por los toboganes y métete en las bolas. Esc para volver a editar.'); }
+  else if (!flight.active) ui.setTool('select');
+  updateVisitButtons();
+}
+function updateVisitButtons() {
+  visitCamBtn.lastChild.textContent = visitor.cam === 'first' ? 'Cámara: con sus ojos' : 'Cámara: 3ª persona';
+  visitRecBtn.classList.toggle('on', recorder.recording); visitRecBtn.lastChild.textContent = recorder.recording ? 'Parar vídeo' : 'Grabar';
+}
+visitCamBtn.onclick = () => visitor.toggleCamera();
+visitRecBtn.onclick = () => { if (recorder.recording) stopRec(); else startRec(); };
+document.getElementById('visitExit').onclick = () => visitor.exit();
+
+// ---------- vídeo: vuelo 360°, paseo y grabación libre ----------
+const videoPanel = document.getElementById('videoPanel'), recBadge = document.getElementById('recBadge'), recTime = document.getElementById('recTime');
+const optOverlay = document.getElementById('optOverlay'), optGrid = document.getElementById('optGrid'), btnRec = document.getElementById('btnRec');
+const MAX_REC = 180; // s
+let recOnPlace = false, clean = null, lastSec = -1;
+btnRec.insertAdjacentHTML('afterbegin', ICONS.rec);
+function toggleVideoPanel() {
+  videoPanel.hidden = !videoPanel.hidden;
+  if (videoPanel.hidden) return;
+  const ok = Recorder.supported();
+  document.getElementById('videoNote').textContent = ok
+    ? `Se descarga un vídeo ${extFor(Recorder.mime()).toUpperCase()} de la vista 3D con la resolución de tu pantalla (máximo ${MAX_REC / 60} minutos). Durante la grabación puedes orbitar con el ratón o pasear con la persona; la interfaz no sale en el vídeo.`
+    : 'Este navegador no permite grabar vídeo. Usa Chrome, Edge o Safari actualizados.';
+  updateRecButtons();
+}
+videoPanel.querySelector('[data-close]').onclick = () => { videoPanel.hidden = true; };
+function updateRecButtons() { btnRec.lastChild.textContent = recorder.recording ? 'Parar y descargar' : 'Empezar a grabar'; btnRec.classList.toggle('danger', recorder.recording); updateVisitButtons(); }
+// Aspecto limpio para foto/vídeo: sin rejilla (opcional), fantasma, resalte ni cotas.
+function cleanStart() {
+  if (clean) return;
+  clean = { grid: optGrid.checked };
+  if (clean.grid) sc.setGridVisible(false);
+  park.ghost.visible = false; if (park.highlight) park.highlight.visible = false; dims.group.visible = false;
+}
+function cleanEnd() {
+  if (!clean) return;
+  if (clean.grid) sc.setGridVisible(true);
+  if (park.highlight) park.highlight.visible = true; dims.group.visible = true; clean = null;
+}
+function startRec() {
+  if (recorder.recording) return false;
+  if (!Recorder.supported()) { alert('Este navegador no permite grabar vídeo. Prueba con Chrome, Edge o Safari actualizados.'); return false; }
+  cleanStart();
+  try { recorder.start({ overlay: optOverlay.checked ? { title: store.state.settings.nombre, logo: logoImg } : null }); }
+  catch (e) { cleanEnd(); alert('No se ha podido empezar a grabar: ' + e.message); return false; }
+  recBadge.hidden = false; videoPanel.hidden = true; lastSec = -1; recTime.textContent = '00:00';
+  updateRecButtons(); return true;
+}
+async function stopRec() {
+  if (!recorder.recording) return;
+  const blob = await recorder.stop();
+  cleanEnd(); recBadge.hidden = true; updateRecButtons();
+  if (blob && blob.size) downloadBlob(blob, `${safe(store.state.settings.nombre)}_video.${extFor(blob.type)}`);
+  else alert('No se ha podido generar el vídeo.');
+}
+function tickRec() {
+  if (!recorder.recording) return;
+  const t = recorder.elapsed, sec = Math.floor(t);
+  if (sec !== lastSec) { lastSec = sec; recTime.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
+  if (t >= MAX_REC) { flight.cancel(); stopRec(); }
+}
+document.getElementById('recStop').onclick = () => { flight.cancel(); stopRec(); };
+btnRec.onclick = () => { if (recorder.recording) stopRec(); else startRec(); };
+document.getElementById('btnFlight').onclick = () => {
+  const box = park.worldBox(); if (!box) { alert('Coloca algún módulo o pieza antes de grabar el vuelo.'); return; }
+  if (visitor.active) visitor.exit();
+  if (!startRec()) return;
+  flight.start(box, parseFloat(document.getElementById('flightDur').value) || 12, () => stopRec());
+};
+document.getElementById('btnWalkRec').onclick = () => {
+  videoPanel.hidden = true;
+  if (visitor.avatar) { visitor.enter(); startRec(); return; }
+  recOnPlace = true; ui.setTool('persona'); ui.setHint('Haz clic en el suelo o en una plataforma para soltar a la persona: la grabación empieza sola.');
+};
 
 // ---------- arranque ----------
 let saved = null;
@@ -422,5 +552,13 @@ ui.setTool('select');
 sc.resetView(park.worldBox());
 initCloud();
 buildAllThumbs(sc.renderer, (type, url) => ui.setThumb(type, url));
-window.__bk = { sc, store, park, ui, setSelection, THREE, get selection() { return selection; } };
-(function loop() { requestAnimationFrame(loop); sc.render(); })();
+window.__bk = { sc, store, park, ui, setSelection, THREE, visitor, recorder, flight, get selection() { return selection; } };
+const clock = new THREE.Clock();
+(function loop() {
+  requestAnimationFrame(loop);
+  const dt = clock.getDelta();
+  if (visitor.active) visitor.update(dt);
+  flight.update(dt);
+  sc.render();
+  recorder.frame(); tickRec();
+})();

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { hexOf, EXTRA, BOLAS } from './palette.js';
-import { netTexture, checkerTexture, latticeTexture, patternTexture } from './textures.js';
+import { netTexture, checkerTexture, latticeTexture, patternTexture, signTexture } from './textures.js';
 import { ELEMENTS, elementDims, activeColors, elementStyle } from './catalog.js';
 
 // Todos los modelos se construyen en metros, con origen en el centro del suelo del
@@ -58,7 +58,7 @@ function chute(curve, w, mFloor, mSide, segs = 28) {
     const seg = new THREE.Group();
     seg.position.copy(a).lerp(b, 0.5);
     seg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), dir.clone().normalize());
-    seg.add(at(box(w, 0.04, len, mFloor), 0, 0, 0));
+    const floor = at(box(w, 0.04, len, mFloor), 0, 0, 0); floor.userData.slide = true; seg.add(floor);
     seg.add(at(box(0.05, 0.18, len, mSide), -w / 2 + 0.025, 0.09, 0));
     seg.add(at(box(0.05, 0.18, len, mSide), w / 2 - 0.025, 0.09, 0));
     g.add(seg);
@@ -71,7 +71,7 @@ function balls(ctx, l, a, layers, y0 = 0.045) {
   const n = Math.max(1, Math.floor(l / 0.085)), nz = Math.max(1, Math.floor(a / 0.085));
   const count = n * nz * layers;
   const im = new THREE.InstancedMesh(new THREE.SphereGeometry(0.0425, 10, 8), mat('#ffffff', { roughness: 0.3 }), count);
-  im.castShadow = true;
+  im.castShadow = true; im.userData.balls = true;
   const pal = BOLAS.find(b => b.id === ctx.el.colors.bolas) || BOLAS[0];
   const mix = pal.mix ? pal.mix.map(id => hexOf(id)) : [pal.hex];
   const d = new THREE.Object3D(); const col = new THREE.Color(); let k = 0;
@@ -135,7 +135,7 @@ const builders = {
     const turns = Math.max(1, drop / 1.3);
     const curve = new Helix(R, drop, turns, R, zTop);
     const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 80, 0.36, 14, false), mat(ctx.cols[0], { side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
-    tube.castShadow = true; tube.position.y = lift; g.add(tube);
+    tube.castShadow = true; tube.position.y = lift; tube.userData.slide = true; g.add(tube);
     const post = cyl(0.03, drop, metalMat()); at(post, R, lift - drop / 2, zTop); g.add(post);
   },
   // Saco colgante: cilindro vertical colgado del techo del módulo. r, len en metros.
@@ -281,6 +281,7 @@ const builders = {
         g.add(rod(A, B, f === 1 ? 0.016 : 0.011, rope, 8));
       }
     }
+    const walk = new THREE.Mesh(new THREE.PlaneGeometry(l, a), new THREE.MeshBasicMaterial({ visible: false })); walk.rotation.x = -Math.PI / 2; walk.position.y = y; g.add(walk);
   },
   prot_cama(ctx) {
     const { S, g, col } = ctx; const V = S.l, D = S.a; const w = 0.3, h = Math.max(0.05, S.h); const m = col(0);
@@ -318,17 +319,29 @@ const builders = {
     const me = new THREE.Mesh(new THREE.PlaneGeometry(V, Hh), mat(EXTRA.canamo, { map: tex, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide }));
     at(me, 0, Hh / 2, -D / 2 + 0.03); g.add(me);
   },
-  pared_cuadrada(ctx) { const { S, g } = ctx; g.add(at(box(S.l, S.h, S.a, ctx.pm({ n: 6, rep: [1, 1] }), 0.01), 0, S.h / 2, 0)); },
+  pared_cuadrada(ctx) { const { S, g } = ctx; const w = at(box(S.l, S.h, S.a, ctx.pm({ n: 6, rep: [1, 1] }), 0.01), 0, S.h / 2, 0); w.userData.wall = true; g.add(w); },
   pared_triangular(ctx) {
     const { S, g, col } = ctx;
     const sh = new THREE.Shape(); sh.moveTo(-S.l / 2, 0); sh.lineTo(S.l / 2, 0); sh.lineTo(-S.l / 2, S.h); sh.closePath();
     const geo = new THREE.ExtrudeGeometry(sh, { depth: S.a, bevelEnabled: false }); geo.translate(0, 0, -S.a / 2);
-    g.add(shadow(new THREE.Mesh(geo, col(0))));
+    const w = shadow(new THREE.Mesh(geo, col(0))); w.userData.wall = true; g.add(w);
   },
   protector_columna(ctx) {
     const { S, g } = ctx; const t = 0.035; const m = ctx.pm({ n: 4, rep: [1, 1] });
     g.add(at(box(S.l, S.h, t, m, 0.01), 0, S.h / 2, -S.a / 2 + t / 2));
     g.add(at(box(t, S.h, S.a - t, m, 0.01), -S.l / 2 + t / 2, S.h / 2, t / 2));
+  },
+  // Rótulo con el nombre del parque (o texto propio): tablero con texto por las dos caras.
+  letrero(ctx) {
+    const { S, g, cols, el, settings } = ctx;
+    const text = (el.texto && el.texto.trim()) || (settings.nombre || '').trim() || 'Mi parque';
+    const bg = cols[0], fg = cols[1] || '#ffffff', border = cols[2] || fg;
+    const face = mat('#ffffff', { map: signTexture(text, { bg, fg, border, aspect: S.l / S.h }) }), plain = mat(bg);
+    const postH = el.y > 0.001 ? 0.14 : 1.1; // encima de la estructura va casi pegado; en el suelo, sobre postes
+    const board = shadow(new THREE.Mesh(new THREE.BoxGeometry(S.l, S.h, S.a), [plain, plain, plain, plain, face, face]));
+    at(board, 0, postH + S.h / 2, 0); g.add(board);
+    for (const x of [-S.l / 2 + 0.12, S.l / 2 - 0.12]) g.add(at(cyl(0.024, postH + 0.03, metalMat(), 12), x, (postH + 0.03) / 2, 0));
+    if (el.y <= 0.001) for (const x of [-S.l / 2 + 0.12, S.l / 2 - 0.12]) g.add(at(cyl(0.09, 0.012, metalMat(), 20), x, 0.006, 0));
   },
   tatami(ctx) {
     const { S, g, cols } = ctx; const V = S.l, D = S.a;
@@ -351,7 +364,7 @@ export function buildElement(el, settings) {
   const g = new THREE.Group();
   const drop = S.h;
   const ctx = {
-    V, D, H, S, el, def, c, g, cols, style,
+    V, D, H, S, el, def, c, g, cols, style, settings,
     col: i => mat(cols[i % cols.length]),
     // Material con el estilo elegido (liso = un color, cíclico por índice i para piezas de varias partes).
     pm: ({ n = 8, rep = [1, 1], ring } = {}, i = 0) => {
@@ -363,5 +376,6 @@ export function buildElement(el, settings) {
   };
   const b = builders[el.type];
   if (b) b(ctx); else g.add(at(box(0.4, 0.4, 0.4, mat('#ff00ff')), 0, 0.2, 0));
+  if (def.pass) g.traverse(o => { if (o !== g) o.userData.pass = true; }); // la persona la atraviesa
   return g;
 }

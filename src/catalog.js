@@ -7,6 +7,8 @@
 //        puede cambiarlas en cada pieza (el.size) y el modelo 3D y el presupuesto las usan.
 // slots: colores. Las piezas con tres colores usan las claves a, b, c (c opcional) y, si tienen
 //        `estilos`, un acabado (liso, mitades, rayas, franjas, cuadros).
+// pass: la persona del modo visita la atraviesa (sacos, cortinas, cuerdas...); el resto bloquea o se pisa.
+// texto: la pieza lleva un texto editable (rótulo).
 
 export const CATEGORIES = [
   { id: 'accesos', name: 'Accesos y toboganes' },
@@ -15,6 +17,7 @@ export const CATEGORIES = [
   { id: 'redes',   name: 'Redes y cintas' },
   { id: 'cierres', name: 'Paredes y cierres' },
   { id: 'suelos',  name: 'Suelos' },
+  { id: 'extras',  name: 'Rótulo y personalización' },
 ];
 
 const pvc = (key, name, def) => ({ key, name, palette: 'pvc', default: def });
@@ -50,7 +53,7 @@ export const ELEMENTS = {
     budget: (el, s, d) => [{ key: 'bolas', concepto: 'Bolas 85 mm certificadas', detalle: `${s.bolasPorM2} bolas/m²`, cantidad: Math.round((d.l / 100) * (d.a / 100) * s.bolasPorM2 * (d.h / 30)), unidad: 'ud', precio: 0.2625 }],
   },
   canasta: {
-    name: 'Canasta de bolas', cat: 'piscina', place: 'cell',
+    name: 'Canasta de bolas', cat: 'piscina', place: 'cell', pass: true,
     desc: 'Tela PVC con orificio central sujeta en una esquina de la piscina.',
     slots: [pvc('color', 'Color', 'azul')], dims: () => ({ l: 80, a: 80, h: 5 }),
     budget: ud('canasta', 'Canasta', 60),
@@ -89,20 +92,20 @@ export const ELEMENTS = {
   },
 
   // --- Juegos y figuras ------------------------------------------------------
-  saco_grande: { name: 'Saco colgante grande', cat: 'juegos', place: 'hang', desc: '30 cm Ø × 100 cm.', slots: c3('azul', 'amarillo'), estilos: true, estilo: 'mitades', dims: () => ({ l: 30, a: 30, h: 100 }), budget: ud('saco_grande', 'Saco colgante grande 30×100', 120) },
-  saco_pequeno: { name: 'Saco colgante pequeño', cat: 'juegos', place: 'hang', desc: '15 cm Ø × 70 cm.', slots: c3('fucsia', 'verde'), estilos: true, estilo: 'mitades', dims: () => ({ l: 15, a: 15, h: 70 }), budget: ud('saco_pequeno', 'Saco colgante pequeño 15×70', 80) },
+  saco_grande: { name: 'Saco colgante grande', cat: 'juegos', place: 'hang', pass: true, desc: '30 cm Ø × 100 cm.', slots: c3('azul', 'amarillo'), estilos: true, estilo: 'mitades', dims: () => ({ l: 30, a: 30, h: 100 }), budget: ud('saco_grande', 'Saco colgante grande 30×100', 120) },
+  saco_pequeno: { name: 'Saco colgante pequeño', cat: 'juegos', place: 'hang', pass: true, desc: '15 cm Ø × 70 cm.', slots: c3('fucsia', 'verde'), estilos: true, estilo: 'mitades', dims: () => ({ l: 15, a: 15, h: 70 }), budget: ud('saco_pequeno', 'Saco colgante pequeño 15×70', 80) },
   sacos_fila: {
-    name: 'Fila de sacos colgantes', cat: 'juegos', place: 'hang', desc: 'Varios sacos colgados en fila a lo ancho del módulo (uno cada 25 cm). Los colores se alternan.',
+    name: 'Fila de sacos colgantes', cat: 'juegos', place: 'hang', pass: true, desc: 'Varios sacos colgados en fila a lo ancho del módulo (uno cada 25 cm). Los colores se alternan.',
     slots: c3('azul', 'amarillo', 'fucsia'), estilos: true, estilo: 'liso', dims: s => ({ l: s.vano, a: 24, h: 100 }),
     budget: (el, s, d) => [{ key: 'saco_grande', concepto: 'Saco colgante grande 30×100', cantidad: Math.max(2, Math.floor(d.l / 25)), unidad: 'ud', precio: 120 }],
   },
   sacos_diagonal: {
-    name: 'Sacos diagonales', cat: 'juegos', place: 'cell', desc: 'Sacos inclinados 45° que cruzan el módulo de lado a lado, en serie. Los colores se alternan.',
+    name: 'Sacos diagonales', cat: 'juegos', place: 'cell', pass: true, desc: 'Sacos inclinados 45° que cruzan el módulo de lado a lado, en serie. Los colores se alternan.',
     slots: c3('azul', 'verde', 'amarillo'), estilos: true, estilo: 'liso', dims: s => ({ l: s.vano, a: s.fondo || s.vano, h: s.altura }),
     budget: (el, s, d) => [{ key: 'saco_diagonal', concepto: 'Saco diagonal 45° (lado a lado)', cantidad: Math.max(1, Math.floor(d.l / 40)), unidad: 'ud', precio: 0, pendiente: true }],
   },
-  boya: { name: 'Boya con cuerda', cat: 'juegos', place: 'hang', slots: c3('verde'), dims: () => ({ l: 40, a: 40, h: 50 }), budget: ud('boya', 'Boya de barco con cuerda', 70) },
-  cuerdas: { name: 'Cuerdas trepadoras', cat: 'juegos', place: 'hang', desc: 'Cuerdas con nudos color cáñamo.', slots: [], dims: s => ({ l: s.vano, a: 20, h: s.altura }), budget: pend('cuerdas', 'Cuerdas trepadoras cáñamo (juego de 3)') },
+  boya: { name: 'Boya con cuerda', cat: 'juegos', place: 'hang', pass: true, slots: c3('verde'), dims: () => ({ l: 40, a: 40, h: 50 }), budget: ud('boya', 'Boya de barco con cuerda', 70) },
+  cuerdas: { name: 'Cuerdas trepadoras', cat: 'juegos', place: 'hang', pass: true, desc: 'Cuerdas con nudos color cáñamo.', slots: [], dims: s => ({ l: s.vano, a: 20, h: s.altura }), budget: pend('cuerdas', 'Cuerdas trepadoras cáñamo (juego de 3)') },
   piramide: { name: 'Pirámide', cat: 'juegos', place: 'cell', slots: c3('fucsia'), estilos: true, dims: () => ({ l: 60, a: 60, h: 60 }), budget: ud('piramide', 'Pirámide de espuma', 160) },
   cubo: { name: 'Cubo', cat: 'juegos', place: 'cell', slots: c3('naranja'), estilos: true, dims: () => ({ l: 50, a: 50, h: 50 }), budget: ud('cubo', 'Cubo de espuma', 120, { est: true }) },
   cilindro: { name: 'Cilindro', cat: 'juegos', place: 'cell', desc: 'Color B para la tapa.', slots: c3('azul', 'amarillo'), estilos: true, dims: () => ({ l: 60, a: 60, h: 50 }), budget: ud('cilindro', 'Cilindro de espuma', 120) },
@@ -135,7 +138,7 @@ export const ELEMENTS = {
     slots: [pvc('cuerda', 'Cuerda', 'negro'), pvc('aro', 'Aro', 'rojo')], dims: s => ({ l: s.vano, a: s.fondo || s.vano, h: 6 }),
     budget: pend('red_arana', 'Red tela de araña con aro'),
   },
-  red_trepa: { name: 'Red trepadora cáñamo', cat: 'redes', place: 'face', slots: [], dims: s => ({ l: s.vano, a: 3, h: s.altura }), budget: pend('red_trepa', 'Red de abordaje / trepa (cáñamo)') },
+  red_trepa: { name: 'Red trepadora cáñamo', cat: 'redes', place: 'face', pass: true, slots: [], dims: s => ({ l: s.vano, a: 3, h: s.altura }), budget: pend('red_trepa', 'Red de abordaje / trepa (cáñamo)') },
 
   // --- Paredes y cierres --------------------------------------------------
   pared_cuadrada: {
@@ -153,10 +156,18 @@ export const ELEMENTS = {
     slots: c3('amarillo'), dims: s => ({ l: 20, a: 20, h: s.altura }),
     budget: (el, s, d) => [{ key: 'protector_columna', concepto: 'Protector de columna en L', detalle: `${d.h} cm de alto`, cantidad: 1, unidad: 'ud', precio: 0, pendiente: true }],
   },
-  cortina: { name: 'Cortina de tiras', cat: 'cierres', place: 'face', desc: 'Las tiras alternan los colores elegidos.', slots: c3('morado', 'verde'), dims: s => ({ l: s.vano, a: 3, h: Math.round(s.altura * 0.8) }), budget: ud('cortina', 'Cortina de tiras PVC', 120) },
-  panel_acceso: { name: 'Panel de acceso', cat: 'cierres', place: 'face', desc: 'Madera 2 cm + espuma D20, círculo central.', slots: c3('azul'), dims: s => ({ l: s.vano, a: 6, h: s.vano }), budget: pend('panel_acceso', 'Panel de acceso con círculo') },
-  cremallera: { name: 'Cremallera de acceso', cat: 'cierres', place: 'face', slots: c3('rojo'), dims: s => ({ l: 8, a: 2, h: Math.round(s.altura * 0.8) }), budget: ud('cremallera', 'Cremallera de acceso en red', 60) },
+  cortina: { name: 'Cortina de tiras', cat: 'cierres', place: 'face', pass: true, desc: 'Las tiras alternan los colores elegidos.', slots: c3('morado', 'verde'), dims: s => ({ l: s.vano, a: 3, h: Math.round(s.altura * 0.8) }), budget: ud('cortina', 'Cortina de tiras PVC', 120) },
+  panel_acceso: { name: 'Panel de acceso', cat: 'cierres', place: 'face', pass: true, desc: 'Madera 2 cm + espuma D20, círculo central.', slots: c3('azul'), dims: s => ({ l: s.vano, a: 6, h: s.vano }), budget: pend('panel_acceso', 'Panel de acceso con círculo') },
+  cremallera: { name: 'Cremallera de acceso', cat: 'cierres', place: 'face', pass: true, slots: c3('rojo'), dims: s => ({ l: 8, a: 2, h: Math.round(s.altura * 0.8) }), budget: ud('cremallera', 'Cremallera de acceso en red', 60) },
   zapatero: { name: 'Zapatero', cat: 'cierres', place: 'face', desc: 'Bolsillos de PVC. Color B para los bolsillos.', slots: c3('azul', 'fucsia'), dims: () => ({ l: 120, a: 5, h: 120 }), budget: ud('zapatero', 'Zapatero PVC 120×120', 120) },
+
+  // --- Rótulo -------------------------------------------------------------
+  letrero: {
+    name: 'Rótulo con el nombre', cat: 'extras', place: 'cell', texto: true,
+    desc: 'Cartel con el nombre del parque (o el texto que quieras). Color A fondo, B letras, C borde. Sobre un módulo va encima de la estructura; en el suelo lleva dos postes.',
+    slots: c3('fucsia', 'blanco', 'amarillo'), dims: s => ({ l: Math.max(120, s.vano * 2), a: 6, h: 50 }),
+    budget: (el, s, d) => [{ key: 'letrero', concepto: 'Rótulo personalizado', detalle: `${d.l}×${d.h} cm · "${(el.texto || s.nombre || '').trim()}"`, cantidad: 1, unidad: 'ud', precio: 0, pendiente: true }],
+  },
 
   // --- Suelos -------------------------------------------------------------
   tatami: { name: 'Tatami puzzle', cat: 'suelos', place: 'cell', desc: 'Puzzle 100×100×2 cm bicolor.', slots: c3('rojo', 'azul'), dims: s => ({ l: s.vano, a: s.fondo || s.vano, h: 2 }), budget: (el, s, d) => [{ key: 'tatami', concepto: 'Tatami puzzle 100×100×2', cantidad: Math.ceil((d.l / 100) * (d.a / 100)), unidad: 'ud', precio: 23.99 }] },

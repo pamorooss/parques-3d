@@ -7,6 +7,7 @@ export function setViewport(w, h) { viewport.w = w; viewport.h = h; }
 function canvasTexture(k, c, opts = {}) {
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; t.name = k;
+  t.colorSpace = THREE.SRGBColorSpace; // los colores del canvas son sRGB (igual que los materiales lisos)
   if (opts.nearest) t.magFilter = THREE.NearestFilter;
   if (opts.repeat) t.repeat.set(opts.repeat[0], opts.repeat[1]);
   cache.set(k, t); return t;
@@ -94,4 +95,24 @@ export function latticeTexture(hexA, hexB, rep = [1, 1]) {
     g.beginPath(); g.moveTo(x + 2, y + 2); g.lineTo(x + 14, y + 14); g.moveTo(x + 14, y + 2); g.lineTo(x + 2, y + 14); g.stroke();
   }
   return canvasTexture(k, c, { repeat: rep });
+}
+
+// Rótulo: tablero de color con borde y texto centrado, ajustado al ancho. aspect = ancho / alto.
+export function signTexture(text, { bg = '#e1248c', fg = '#ffffff', border = '#f7c600', aspect = 4 } = {}) {
+  const k = `sign|${text}|${bg}|${fg}|${border}|${aspect.toFixed(2)}`;
+  if (cache.has(k)) return cache.get(k);
+  const W = 1024, H = Math.max(96, Math.min(1024, Math.round(W / aspect)));
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const bw = Math.round(Math.min(W, H) * 0.07); g.lineWidth = bw; g.strokeStyle = border; g.strokeRect(bw / 2, bw / 2, W - bw, H - bw);
+  const pad = Math.max(bw * 2, W * 0.05); let size = H * 0.6;
+  const font = s => `800 ${s}px "Plus Jakarta Sans", Helvetica, Arial, sans-serif`;
+  g.font = font(size);
+  while (size > 12 && g.measureText(text).width > W - 2 * pad) { size *= 0.94; g.font = font(size); }
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.shadowColor = 'rgba(0,0,0,0.28)'; g.shadowBlur = Math.round(size * 0.12); g.shadowOffsetY = Math.round(size * 0.05);
+  g.fillText(text, W / 2, H / 2 + size * 0.04);
+  const t = canvasTexture(k, c); t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 8;
+  return t;
 }
