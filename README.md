@@ -15,17 +15,20 @@ npm run dev     # abre http://localhost:5173
 
 ## Cómo se usa
 
-- **Módulo (E)**: pon ancho, fondo y alto en cm y haz clic en el suelo (cae en casillas de su propio
+- **Moverse por el mapa**: arrastra para orbitar, rueda para zoom y botón derecho para desplazar; con el
+  teclado, **WASD** desplaza la vista, **Q/E** la giran y Mayús acelera. Las herramientas van en los números 1 a 7.
+
+- **Módulo (2)**: pon ancho, fondo y alto en cm y haz clic en el suelo (cae en casillas de su propio
   tamaño y se pega a los bordes de otros módulos) o en la cara de un módulo existente (se añade pegado a esa cara; en la
   tapa, encima). Cada módulo es independiente: selecciónalo para cambiar sus medidas o su posición
   en cm sin que se muevan los de al lado. Los tubos que coinciden se comparten y las uniones
   (codos, T, cruces) se calculan solas. Clic derecho lo quita.
-- **Plataforma (S)**: clic en la tapa de un módulo para poner plataforma arriba; en un lateral, en su base.
+- **Plataforma (3)**: clic en la tapa de un módulo para poner plataforma arriba; en un lateral, en su base.
   En el panel se elige la forma: entera, mitad o triángulo (y se gira); también desde la plataforma ya puesta.
 - **Tubos**: cada tramo es independiente. Al seleccionarlo se puede cambiar el color de la coquilla,
   quitar solo la coquilla (queda el tubo galvanizado) o quitar el tramo entero (Borrar o Supr); las uniones
   se recalculan. Desde el módulo se restauran los tubos quitados.
-- **Red (N)**: clic en una cara lateral para poner o quitar red de protección.
+- **Red (4)**: clic en una cara lateral para poner o quitar red de protección.
 - **Catálogo**: elige una pieza y haz clic en el módulo donde va: queda centrada y luego se afina en cm
   con las flechas. El fantasma naranja marca el hueco y la flecha el frente; **R** gira.
 - **Piezas**: cada pieza tiene **medidas editables** (largo, ancho, alto en cm; por ejemplo el ancho del
@@ -34,19 +37,19 @@ npm run dev     # abre http://localhost:5173
   rectangulares y triangulares para tapar los laterales de rampas, bolas sueltas sin piscina, sacos
   diagonales, fila de sacos, redes de cintas (con o sin hueco), tela de araña, hexágonos, semicilindros y
   protector de columna.
-- **Seleccionar (V)**: clic en cualquier pieza para cambiar sus colores, girarla o borrarla. Con una
+- **Seleccionar (1)**: clic en cualquier pieza para cambiar sus colores, girarla o borrarla. Con una
   pieza o un módulo seleccionado aparece el pad de flechas: el selector **Paso** elige cuánto se mueve
   (½ módulo, 1 módulo o 25/10/5/1 cm); las flechas del teclado hacen lo mismo y con Mayús mueven 1 cm.
   Planta +/− sube o baja a la siguiente altura de apoyo. En el panel Pieza se escribe la posición
   exacta X/altura/Z en cm.
-- **Pintar (P)** aplica el color actual a coquillas, redes, plataformas o juegos.
+- **Pintar (5)** aplica el color actual a coquillas, redes, plataformas o juegos.
 - **Foto** descarga un PNG; **Ficha** abre el presupuesto para el cliente con el logo de BolaKids
   (imagen 3D, medidas, desglose por capítulos y totales) listo para imprimir o guardar como PDF. La
   referencia y la validez se ponen en Ajustes. El logo está en `public/logo-bolakids.png`.
 - **Rótulo con el nombre** (catálogo, "Rótulo y personalización"): cartel con el nombre del parque (o el texto
   que se escriba en la pieza) con fondo, letras y borde a elegir. Sobre un módulo va encima de la estructura;
   en el suelo lleva dos postes. Cambia solo cuando se cambia el nombre del parque.
-- **Persona · modo visita (A)**: clic en el suelo o en una plataforma para soltar a una persona a escala real
+- **Persona · modo visita (7)**: clic en el suelo o en una plataforma para soltar a una persona a escala real
   (altura de ojos de un niño; sin opciones que elegir). Se entra en el modo visita
   **en primera persona** (se ve con sus ojos): **WASD** o flechas para andar, **Mayús** correr, **Espacio**
   saltar, arrastrar para mirar y **C** para verla desde fuera (3ª persona; rueda para acercar). Sube escaleras y rampas, choca con redes, tubos y paredes, se tira

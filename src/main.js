@@ -455,10 +455,27 @@ window.addEventListener('keydown', e => {
     const sel = selection; store.mutate(s => deleteThing(s, sel));
     setSelection(null); return;
   }
-  const map = { v: 'select', e: 'estructura', s: 'suelo', n: 'red', p: 'pintar', x: 'borrar', a: 'persona' };
-  if (map[k]) ui.setTool(map[k]);
+  const map = { 1: 'select', 2: 'estructura', 3: 'suelo', 4: 'red', 5: 'pintar', 6: 'borrar', 7: 'persona' };
+  if (map[k]) { ui.setTool(map[k]); return; }
+  if (CAM_KEYS[k]) { camKeys[CAM_KEYS[k]] = true; camKeys.fast = e.shiftKey; e.preventDefault(); }
 });
-window.addEventListener('keyup', e => visitor.keyup(e));
+window.addEventListener('keyup', e => { visitor.keyup(e); const k = e.key.toLowerCase(); if (CAM_KEYS[k]) camKeys[CAM_KEYS[k]] = false; if (k === 'shift') camKeys.fast = false; });
+window.addEventListener('blur', () => { for (const k in camKeys) camKeys[k] = false; });
+
+// Moverse por el mapa en modo edición: WASD desplaza la vista (relativo a la cámara), Q/E la giran, Mayús acelera.
+const CAM_KEYS = { w: 'fwd', s: 'back', a: 'left', d: 'right', q: 'rotl', e: 'rotr' };
+const camKeys = {};
+function moveCamera(dt) {
+  if (visitor.active || !sc.controls.enabled) return;
+  const c = sc.controls, cam = sc.camera;
+  const f = new THREE.Vector3().subVectors(c.target, cam.position); f.y = 0; if (f.lengthSq() < 1e-6) return; f.normalize();
+  const r = new THREE.Vector3(-f.z, 0, f.x);
+  const v = new THREE.Vector3();
+  if (camKeys.fwd) v.add(f); if (camKeys.back) v.sub(f); if (camKeys.right) v.add(r); if (camKeys.left) v.sub(r);
+  if (v.lengthSq()) { v.normalize().multiplyScalar((camKeys.fast ? 7 : 3.5) * dt * Math.max(1, cam.position.distanceTo(c.target) / 6)); cam.position.add(v); c.target.add(v); }
+  const rot = (camKeys.rotl ? 1 : 0) - (camKeys.rotr ? 1 : 0);
+  if (rot) { const off = new THREE.Vector3().subVectors(cam.position, c.target); off.applyAxisAngle(new THREE.Vector3(0, 1, 0), rot * 1.6 * dt); cam.position.copy(c.target).add(off); }
+}
 
 // ---------- modo visita: HUD ----------
 const viewportEl = document.getElementById('viewport'), visitHud = document.getElementById('visitHud');
@@ -550,7 +567,7 @@ const clock = new THREE.Clock();
 (function loop() {
   requestAnimationFrame(loop);
   const dt = clock.getDelta();
-  if (visitor.active) visitor.update(dt);
+  if (visitor.active) visitor.update(dt); else moveCamera(dt);
   sc.render();
   recorder.frame(); tickRec();
 })();

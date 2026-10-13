@@ -8,13 +8,13 @@ import { ICONS } from './icons.js';
 import { SKINS, HAIRS } from './avatar.js';
 
 export const TOOLS = [
-  { id: 'select',     name: 'Seleccionar', key: 'V', hint: 'Clic en una pieza, tubo o módulo para editarlo (medidas, posición, color). R gira, Supr borra. Arrastra para orbitar, rueda para zoom, botón derecho para desplazar.' },
-  { id: 'estructura', name: 'Módulo',      key: 'E', hint: 'Clic en el suelo: módulo nuevo con las medidas del panel, por casillas y pegándose a los módulos de al lado. Clic en una cara de otro módulo: lo añade pegado a esa cara. Clic derecho: lo quita.' },
-  { id: 'suelo',      name: 'Plataforma',  key: 'S', hint: 'Clic en la tapa de un módulo: plataforma arriba. Clic en un lateral: plataforma en su base. Elige la forma (entera, mitad, triángulo) en el panel. Repite para quitar.' },
-  { id: 'red',        name: 'Red',         key: 'N', hint: 'Clic en una cara lateral de un módulo: pone o quita la red de protección.' },
-  { id: 'pintar',     name: 'Pintar',      key: 'P', hint: 'Clic en cualquier pieza (coquilla, red, plataforma, juego) para aplicarle el color actual.' },
-  { id: 'borrar',     name: 'Borrar',      key: 'X', hint: 'Clic en cualquier pieza para eliminarla. En un tubo quita solo ese tramo; en un módulo, el módulo entero.' },
-  { id: 'persona',    name: 'Persona · modo visita', key: 'A', hint: 'Clic en el suelo o en una plataforma para entrar en el parque en primera persona: andar, subir escaleras, tirarse por los toboganes y meterse en las bolas. Esc para volver a editar (la persona desaparece).' },
+  { id: 'select',     name: 'Seleccionar', key: '1', hint: 'Clic en una pieza, tubo o módulo para editarlo (medidas, posición, color). R gira, Supr borra. Moverse: WASD desplaza la vista, Q y E la giran, rueda para zoom; o arrastra con el ratón (botón derecho desplaza).' },
+  { id: 'estructura', name: 'Módulo',      key: '2', hint: 'Clic en el suelo: módulo nuevo con las medidas del panel, por casillas y pegándose a los módulos de al lado. Clic en una cara de otro módulo: lo añade pegado a esa cara. Clic derecho: lo quita.' },
+  { id: 'suelo',      name: 'Plataforma',  key: '3', hint: 'Clic en la tapa de un módulo: plataforma arriba. Clic en un lateral: plataforma en su base. Elige la forma (entera, mitad, triángulo) en el panel. Repite para quitar.' },
+  { id: 'red',        name: 'Red',         key: '4', hint: 'Clic en una cara lateral de un módulo: pone o quita la red de protección.' },
+  { id: 'pintar',     name: 'Pintar',      key: '5', hint: 'Clic en cualquier pieza (coquilla, red, plataforma, juego) para aplicarle el color actual.' },
+  { id: 'borrar',     name: 'Borrar',      key: '6', hint: 'Clic en cualquier pieza para eliminarla. En un tubo quita solo ese tramo; en un módulo, el módulo entero.' },
+  { id: 'persona',    name: 'Persona · modo visita', key: '7', hint: 'Clic en el suelo o en una plataforma para entrar en el parque en primera persona: andar, subir escaleras, tirarse por los toboganes y meterse en las bolas. Esc para volver a editar (la persona desaparece).' },
 ];
 
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
