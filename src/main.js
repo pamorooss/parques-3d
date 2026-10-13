@@ -465,7 +465,7 @@ const viewportEl = document.getElementById('viewport'), visitHud = document.getE
 const visitCamBtn = document.getElementById('visitCam'), visitRecBtn = document.getElementById('visitRec');
 visitCamBtn.insertAdjacentHTML('afterbegin', ICONS.cam); visitRecBtn.insertAdjacentHTML('afterbegin', ICONS.rec);
 function visitUI(on) {
-  visitHud.hidden = !on; viewportEl.classList.toggle('visiting', on);
+  visitHud.hidden = !on; viewportEl.classList.toggle('visiting', on); document.getElementById('app').classList.toggle('visiting', on);
   if (on) { park.hideGhost(); setSelection(null); movepad.hidden = true; ui.setHint('Modo visita: pasea por el parque con WASD o las flechas, salta con Espacio, tírate por los toboganes y métete en las bolas. C cambia la cámara; Esc sale y la persona desaparece.'); }
   else ui.setTool('select');
   updateVisitButtons();
