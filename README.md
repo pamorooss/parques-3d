@@ -53,9 +53,9 @@ npm run dev     # abre http://localhost:5173
   por los toboganes (sentada, con velocidad) y entra en las piscinas y bolas (más despacio, brazos arriba);
   los sacos, cortinas y cuerdas se atraviesan. **Esc** vuelve a editar y la persona desaparece.
 - **Vídeo**: graba la vista 3D en MP4 (o WebM según navegador) sin la interfaz y con el nombre del parque
-  y el logo incrustados (opcional). Tres modos: **vuelo 360°** automático alrededor del parque (8–30 s),
-  **paseo con la persona** (suelta la persona y graba el recorrido) y **grabación libre** de lo que se vea
-  (orbitar, visitar…). Se descarga al parar; máximo 3 minutos.
+  y el logo incrustados (opcional). Dos modos: **grabación libre** de lo que se vea en pantalla (orbitas y
+  haces zoom como quieras) y **paseo con la persona** (suelta la persona y graba el recorrido en primera
+  persona). Se descarga al parar; máximo 3 minutos.
 - **Guardar / Abrir** exporta e importa el parque en `.json`. El trabajo en curso se guarda solo en el navegador.
 
 ## Nube y acceso
@@ -83,4 +83,4 @@ Desplegado en Netlify, la app pide usuario y contraseña y guarda los parques en
 - `src/catalog.js` piezas, medidas y presupuesto · `src/palette.js` cartas de color reales
 - `src/budget.js` presupuesto y optimización de corte de coquillas y tubo
 - `src/models.js` geometría procedural de cada pieza · `src/render.js` escena · `src/ui.js` paneles
-- `src/avatar.js` persona de bloques y posturas · `src/visit.js` modo visita (física por rayos: suelo y escalones, paredes, toboganes `userData.slide`, zonas de bolas; piezas `pass` se atraviesan) · `src/video.js` grabación con MediaRecorder (canvas intermedio con rótulo y logo) y vuelo 360°
+- `src/avatar.js` persona de bloques y posturas · `src/visit.js` modo visita (física por rayos: suelo y escalones, paredes, toboganes `userData.slide`, zonas de bolas; piezas `pass` se atraviesan) · `src/video.js` grabación con MediaRecorder (canvas intermedio con rótulo y logo)

@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 // Grabación de vídeo de la vista 3D con MediaRecorder. Se graba desde un canvas 2D
 // intermedio: en cada frame se copia el canvas WebGL y se pinta encima el rótulo
 // (nombre del parque y logo), que así forman parte del vídeo.
@@ -65,35 +63,4 @@ export class Recorder {
 export function downloadBlob(blob, name) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-}
-
-// Vuelo cinematográfico: una vuelta completa alrededor del parque en `duration` segundos.
-export class Flight {
-  constructor(sc) { this.sc = sc; this.active = false; }
-  start(box, duration, onDone) {
-    if (!box) return false;
-    const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
-    this.c = c; this.size = size; this.dur = Math.max(3, duration); this.t = 0; this.onDone = onDone;
-    this.R = Math.max(size.x, size.z, size.y * 1.4) * 1.1 + 2.2;
-    this.h = size.y * 0.8 + this.R * 0.38;
-    this.look = new THREE.Vector3(c.x, Math.min(c.y, size.y * 0.45), c.z);
-    const cam = this.sc.camera; this.a0 = Math.atan2(cam.position.x - c.x, cam.position.z - c.z);
-    this.active = true; this.sc.controls.enabled = false;
-    this.update(0); return true;
-  }
-  update(dt) {
-    if (!this.active) return;
-    this.t += dt; const u = Math.min(1, this.t / this.dur);
-    const a = this.a0 + u * Math.PI * 2, bob = Math.sin(u * Math.PI * 4) * this.R * 0.05;
-    const cam = this.sc.camera;
-    cam.position.set(this.c.x + Math.sin(a) * this.R, this.h + bob, this.c.z + Math.cos(a) * this.R);
-    cam.lookAt(this.look);
-    if (u >= 1) this.finish();
-  }
-  cancel() { if (this.active) this.finish(false); }
-  finish(call = true) {
-    this.active = false;
-    const c = this.sc.controls; c.target.copy(this.look); c.enabled = true; c.update();
-    if (call && this.onDone) this.onDone();
-  }
 }

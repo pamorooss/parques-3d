@@ -13,7 +13,7 @@ import { computeBudget } from './budget.js';
 import { saveJSON, snapshotPNG, savePhoto, saveCSV, openFicha, LOGO, safe } from './export.js';
 import { Visitor } from './visit.js';
 import { presetById } from './avatar.js';
-import { Recorder, Flight, downloadBlob, extFor } from './video.js';
+import { Recorder, downloadBlob, extFor } from './video.js';
 
 const AUTOSAVE = 'bolakids3d:autosave';
 const SNAP = 0.05;            // redondeo fino (m)
@@ -27,7 +27,6 @@ let selection = null;
 // Modo visita (persona que recorre el parque), grabación de vídeo y vuelo 360°.
 const visitor = new Visitor(sc, { onEnter: () => visitUI(true), onExit: () => visitUI(false), onCamera: () => updateVisitButtons() });
 const recorder = new Recorder(sc);
-const flight = new Flight(sc);
 const logoImg = new Image(); logoImg.src = LOGO;
 
 // ---------- parque de ejemplo ----------
@@ -247,14 +246,14 @@ document.getElementById('fileInput').onchange = ev => {
 const canvas = sc.renderer.domElement;
 let down = null;
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-canvas.addEventListener('pointerdown', e => { if (visitor.active || flight.active) return; down = { x: e.clientX, y: e.clientY, t: performance.now(), b: e.button }; });
+canvas.addEventListener('pointerdown', e => { if (visitor.active) return; down = { x: e.clientX, y: e.clientY, t: performance.now(), b: e.button }; });
 canvas.addEventListener('pointerup', e => {
-  if (!down || visitor.active || flight.active) { down = null; return; }
+  if (!down || visitor.active) { down = null; return; }
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
   if (moved < 5 && performance.now() - down.t < 500) handleClick(e.clientX, e.clientY, down.b);
   down = null;
 });
-canvas.addEventListener('pointermove', e => { if (!down && !visitor.active && !flight.active) handleHover(e.clientX, e.clientY); });
+canvas.addEventListener('pointermove', e => { if (!down && !visitor.active) handleHover(e.clientX, e.clientY); });
 canvas.addEventListener('pointerleave', () => park.hideGhost());
 
 const pickObjs = () => [...park.pickGroup.children, sc.ground];
@@ -468,7 +467,7 @@ visitCamBtn.insertAdjacentHTML('afterbegin', ICONS.cam); visitRecBtn.insertAdjac
 function visitUI(on) {
   visitHud.hidden = !on; viewportEl.classList.toggle('visiting', on);
   if (on) { park.hideGhost(); setSelection(null); movepad.hidden = true; ui.setHint('Modo visita: pasea por el parque con WASD o las flechas, salta con Espacio, tírate por los toboganes y métete en las bolas. C cambia la cámara; Esc sale y la persona desaparece.'); }
-  else if (!flight.active) ui.setTool('select');
+  else ui.setTool('select');
   updateVisitButtons();
 }
 function updateVisitButtons() {
@@ -528,16 +527,10 @@ function tickRec() {
   if (!recorder.recording) return;
   const t = recorder.elapsed, sec = Math.floor(t);
   if (sec !== lastSec) { lastSec = sec; recTime.textContent = `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`; }
-  if (t >= MAX_REC) { flight.cancel(); stopRec(); }
+  if (t >= MAX_REC) stopRec();
 }
-document.getElementById('recStop').onclick = () => { flight.cancel(); stopRec(); };
+document.getElementById('recStop').onclick = () => stopRec();
 btnRec.onclick = () => { if (recorder.recording) stopRec(); else startRec(); };
-document.getElementById('btnFlight').onclick = () => {
-  const box = park.worldBox(); if (!box) { alert('Coloca algún módulo o pieza antes de grabar el vuelo.'); return; }
-  if (visitor.active) visitor.exit();
-  if (!startRec()) return;
-  flight.start(box, parseFloat(document.getElementById('flightDur').value) || 12, () => stopRec());
-};
 document.getElementById('btnWalkRec').onclick = () => {
   videoPanel.hidden = true;
   if (visitor.avatar) { visitor.enter(); startRec(); return; }
@@ -552,13 +545,12 @@ ui.setTool('select');
 sc.resetView(park.worldBox());
 initCloud();
 buildAllThumbs(sc.renderer, (type, url) => ui.setThumb(type, url));
-window.__bk = { sc, store, park, ui, setSelection, THREE, visitor, recorder, flight, get selection() { return selection; } };
+window.__bk = { sc, store, park, ui, setSelection, THREE, visitor, recorder, get selection() { return selection; } };
 const clock = new THREE.Clock();
 (function loop() {
   requestAnimationFrame(loop);
   const dt = clock.getDelta();
   if (visitor.active) visitor.update(dt);
-  flight.update(dt);
   sc.render();
   recorder.frame(); tickRec();
 })();
