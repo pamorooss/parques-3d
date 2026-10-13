@@ -467,12 +467,12 @@ const visitCamBtn = document.getElementById('visitCam'), visitRecBtn = document.
 visitCamBtn.insertAdjacentHTML('afterbegin', ICONS.cam); visitRecBtn.insertAdjacentHTML('afterbegin', ICONS.rec);
 function visitUI(on) {
   visitHud.hidden = !on; viewportEl.classList.toggle('visiting', on);
-  if (on) { park.hideGhost(); setSelection(null); movepad.hidden = true; ui.setHint('Modo visita: pasea por el parque con WASD o las flechas, salta con Espacio, tírate por los toboganes y métete en las bolas. Esc para volver a editar.'); }
+  if (on) { park.hideGhost(); setSelection(null); movepad.hidden = true; ui.setHint('Modo visita: pasea por el parque con WASD o las flechas, salta con Espacio, tírate por los toboganes y métete en las bolas. C cambia la cámara; Esc sale y la persona desaparece.'); }
   else if (!flight.active) ui.setTool('select');
   updateVisitButtons();
 }
 function updateVisitButtons() {
-  visitCamBtn.lastChild.textContent = visitor.cam === 'first' ? 'Cámara: con sus ojos' : 'Cámara: 3ª persona';
+  visitCamBtn.lastChild.textContent = visitor.cam === 'first' ? 'Ver a la persona' : 'Ver con sus ojos';
   visitRecBtn.classList.toggle('on', recorder.recording); visitRecBtn.lastChild.textContent = recorder.recording ? 'Parar vídeo' : 'Grabar';
 }
 visitCamBtn.onclick = () => visitor.toggleCamera();

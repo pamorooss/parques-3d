@@ -14,7 +14,7 @@ export const TOOLS = [
   { id: 'red',        name: 'Red',         key: 'N', hint: 'Clic en una cara lateral de un módulo: pone o quita la red de protección.' },
   { id: 'pintar',     name: 'Pintar',      key: 'P', hint: 'Clic en cualquier pieza (coquilla, red, plataforma, juego) para aplicarle el color actual.' },
   { id: 'borrar',     name: 'Borrar',      key: 'X', hint: 'Clic en cualquier pieza para eliminarla. En un tubo quita solo ese tramo; en un módulo, el módulo entero.' },
-  { id: 'persona',    name: 'Persona · modo visita', key: 'A', hint: 'Clic en el suelo o en una plataforma para soltar a la persona y recorrer el parque: andar, subir escaleras, tirarse por los toboganes y meterse en las bolas. Esc para volver a editar.' },
+  { id: 'persona',    name: 'Persona · modo visita', key: 'A', hint: 'Clic en el suelo o en una plataforma para entrar en el parque en primera persona: andar, subir escaleras, tirarse por los toboganes y meterse en las bolas. Esc para volver a editar (la persona desaparece).' },
 ];
 
 const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
@@ -148,20 +148,14 @@ export class UI {
   // Persona del modo visita: tamaño (escala real), ropa, piel y pelo.
   renderPersona(box) {
     const o = this.persona; const pick = k => id => { o[k] = id; this.renderColorBox(); };
-    box.appendChild(h('label', '', 'Tamaño de la persona (escala real)'));
+    box.appendChild(h('label', '', 'Tamaño de la persona (altura de los ojos)'));
     box.appendChild(this.segmented(PRESETS, o.preset, pick('preset')));
     box.appendChild(h('label', '', `Camiseta: <b>${nameOf(o.camiseta)}</b>`)); box.appendChild(this.swatches(PVC, o.camiseta, pick('camiseta')));
     box.appendChild(h('label', '', `Pantalón: <b>${nameOf(o.pantalon)}</b>`)); box.appendChild(this.swatches(PVC, o.pantalon, pick('pantalon')));
     const mini = (pal, cur, k) => { const w = this.swatches(pal, cur, pick(k)); w.classList.add('mini'); return w; };
     box.appendChild(h('label', '', 'Piel')); box.appendChild(mini(SKINS, o.piel, 'piel'));
     box.appendChild(h('label', '', 'Pelo')); box.appendChild(mini(HAIRS, o.pelo, 'pelo'));
-    if (this.actions.hasAvatar && this.actions.hasAvatar()) {
-      const row = h('div', 'row');
-      const go = h('button', 'primary', 'Pasear con la persona'); go.onclick = () => this.actions.visit('enter');
-      const rm = h('button', 'danger', 'Quitar persona'); rm.onclick = () => { this.actions.visit('remove'); this.renderColorBox(); };
-      row.append(go, rm); box.appendChild(row);
-    }
-    box.appendChild(h('p', 'muted', 'Haz clic en el suelo o en una plataforma para soltarla. Entras en el modo visita: WASD o flechas para andar, Mayús para correr, Espacio para saltar, arrastra para mirar y C para ver con sus ojos. Baja por los toboganes y métete en las bolas. Esc para salir.'));
+    box.appendChild(h('p', 'muted', 'Haz clic en el suelo o en una plataforma para entrar. Se ve con sus ojos (primera persona): WASD o flechas para andar, Mayús para correr, Espacio para saltar, arrastra para mirar y C para verla desde fuera. Baja por los toboganes y métete en las bolas. Esc para salir: la persona desaparece.'));
   }
 
   // ---------- selección ----------

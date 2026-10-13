@@ -15,7 +15,7 @@ const lerpAngle = (a, b, t) => { let d = (b - a) % (Math.PI * 2); if (d > Math.P
 export class Visitor {
   constructor(sc, hooks = {}) {
     this.sc = sc; this.hooks = hooks;
-    this.avatar = null; this.preset = null; this.active = false; this.cam = 'third';
+    this.avatar = null; this.preset = null; this.active = false; this.cam = 'first'; // por defecto se ve con sus ojos
     this.keys = {}; this.ray = new THREE.Raycaster(); this.coll = []; this.zones = [];
     this.pos = new THREE.Vector3(); this.renderY = 0; this.vy = 0; this.onGround = true;
     this.yaw = 0; this.camYaw = 0; this.pitch = 0.35; this.elev = 0; this.dist = 3;
@@ -43,8 +43,12 @@ export class Visitor {
     this.sc.scene.add(this.avatar);
   }
   remove() {
-    if (this.active) this.exit();
-    if (this.avatar) { this.sc.scene.remove(this.avatar); this.avatar.traverse(o => { if (o.geometry) o.geometry.dispose(); }); this.avatar = null; }
+    if (this.active) { this.exit(); return; } // exit() ya la quita
+    this.dispose();
+  }
+  dispose() {
+    if (!this.avatar) return;
+    this.sc.scene.remove(this.avatar); this.avatar.traverse(o => { if (o.geometry) o.geometry.dispose(); }); this.avatar = null;
   }
   // Mallas con las que choca / se pisa, y zonas de bolas { x0, x1, z0, z1, top, base }.
   setWorld(coll, zones) {
@@ -68,11 +72,12 @@ export class Visitor {
     this.active = false; this.keys = {}; this.drag = null;
     const c = this.sc.controls, cam = this.sc.camera;
     if (this.avatar) {
-      this.avatar.visible = true;
+      // la cámara se queda mirando donde estaba la persona, un poco atrás y arriba
       c.target.set(this.pos.x, this.pos.y + this.preset.h * 0.6, this.pos.z);
-      if (this.cam === 'first') cam.position.set(this.pos.x + Math.sin(this.camYaw) * 3, this.pos.y + 2, this.pos.z + Math.cos(this.camYaw) * 3);
+      if (this.cam === 'first') cam.position.set(this.pos.x + Math.sin(this.camYaw) * 3.5, this.pos.y + 2.2, this.pos.z + Math.cos(this.camYaw) * 3.5);
     }
     c.enabled = true; c.update();
+    this.dispose(); // al salir, la persona desaparece
     this.hooks.onExit && this.hooks.onExit();
   }
   toggleCamera() {
