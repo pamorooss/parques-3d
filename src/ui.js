@@ -5,7 +5,7 @@ import { computeBudget } from './budget.js';
 import { moduleById, localSettings, faceRect, cm, r3, FLOOR_SHAPES, floorShape } from './state.js';
 import { unionName, hiddenTubesOf } from './structure.js';
 import { ICONS } from './icons.js';
-import { PRESETS, SKINS, HAIRS } from './avatar.js';
+import { SKINS, HAIRS } from './avatar.js';
 
 export const TOOLS = [
   { id: 'select',     name: 'Seleccionar', key: 'V', hint: 'Clic en una pieza, tubo o módulo para editarlo (medidas, posición, color). R gira, Supr borra. Arrastra para orbitar, rueda para zoom, botón derecho para desplazar.' },
@@ -81,6 +81,7 @@ export class UI {
     const t = TOOLS.find(x => x.id === tool);
     if (tool === 'place') { const d = ELEMENTS[placeType]; this.setHint(`${d.name}: clic en el módulo donde va (queda centrada; luego se afina en cm con las flechas). R gira (la flecha naranja marca el frente). ${d.desc || ''}`); }
     else this.setHint(t.hint);
+    document.getElementById('colorCard').hidden = tool === 'persona'; // la persona no tiene nada que editar
     this.renderColorBox();
     this.actions.onToolChange && this.actions.onToolChange();
   }
@@ -137,25 +138,12 @@ export class UI {
       box.appendChild(h('label', '', 'PVC de la plataforma')); box.appendChild(this.swatches(PVC, s.colorSuelo, set('colorSuelo')));
     }
     else if (this.tool === 'pintar') { box.appendChild(h('label', '', 'Color a aplicar')); box.appendChild(this.swatches(PVC, this.paintColor, id => { this.paintColor = id; this.renderColorBox(); })); }
-    else if (this.tool === 'persona') this.renderPersona(box);
+    else if (this.tool === 'persona') { /* sin opciones: la tarjeta se oculta */ }
     else if (this.tool === 'place') {
       const d = ELEMENTS[this.placeType]; const pc = this.placeColors[this.placeType];
       const style = this.placeStyle[this.placeType] || d.estilo || 'liso';
       this.colorSlots(box, d, pc, style, (k, id) => { pc[k] = id; this.renderColorBox(); }, st => { this.placeStyle[this.placeType] = st; this.renderColorBox(); });
     } else box.appendChild(h('div', 'muted', 'Elige Módulo, Red, Plataforma, Pintar o una pieza del catálogo para ver sus colores.'));
-  }
-
-  // Persona del modo visita: tamaño (escala real), ropa, piel y pelo.
-  renderPersona(box) {
-    const o = this.persona; const pick = k => id => { o[k] = id; this.renderColorBox(); };
-    box.appendChild(h('label', '', 'Tamaño de la persona (altura de los ojos)'));
-    box.appendChild(this.segmented(PRESETS, o.preset, pick('preset')));
-    box.appendChild(h('label', '', `Camiseta: <b>${nameOf(o.camiseta)}</b>`)); box.appendChild(this.swatches(PVC, o.camiseta, pick('camiseta')));
-    box.appendChild(h('label', '', `Pantalón: <b>${nameOf(o.pantalon)}</b>`)); box.appendChild(this.swatches(PVC, o.pantalon, pick('pantalon')));
-    const mini = (pal, cur, k) => { const w = this.swatches(pal, cur, pick(k)); w.classList.add('mini'); return w; };
-    box.appendChild(h('label', '', 'Piel')); box.appendChild(mini(SKINS, o.piel, 'piel'));
-    box.appendChild(h('label', '', 'Pelo')); box.appendChild(mini(HAIRS, o.pelo, 'pelo'));
-    box.appendChild(h('p', 'muted', 'Haz clic en el suelo o en una plataforma para entrar. Se ve con sus ojos (primera persona): WASD o flechas para andar, Mayús para correr, Espacio para saltar, arrastra para mirar y C para verla desde fuera. Baja por los toboganes y métete en las bolas. Esc para salir: la persona desaparece.'));
   }
 
   // ---------- selección ----------

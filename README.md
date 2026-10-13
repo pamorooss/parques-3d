@@ -47,7 +47,7 @@ npm run dev     # abre http://localhost:5173
   que se escriba en la pieza) con fondo, letras y borde a elegir. Sobre un módulo va encima de la estructura;
   en el suelo lleva dos postes. Cambia solo cuando se cambia el nombre del parque.
 - **Persona · modo visita (A)**: clic en el suelo o en una plataforma para soltar a una persona a escala real
-  (peque 1,15 m, mayor 1,40 m o adulto 1,70 m; ropa, piel y pelo a elegir). Se entra en el modo visita
+  (altura de ojos de un niño; sin opciones que elegir). Se entra en el modo visita
   **en primera persona** (se ve con sus ojos): **WASD** o flechas para andar, **Mayús** correr, **Espacio**
   saltar, arrastrar para mirar y **C** para verla desde fuera (3ª persona; rueda para acercar). Sube escaleras y rampas, choca con redes, tubos y paredes, se tira
   por los toboganes (sentada, con velocidad) y entra en las piscinas y bolas (más despacio, brazos arriba);

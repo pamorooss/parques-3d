@@ -240,4 +240,4 @@ table.budget tr.g td.n { color: var(--accent-dark); font-weight: 600; font-size:
 #visitHud .btns button, .pop button, #recBadge button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 #visitHud .btns button svg, .pop button svg { width: 15px; height: 15px; flex: none; }
 #visitHud #visitRec.on svg { color: #fff; }
-#app.visiting #colorCard { display: none; } /* en modo visita no se edita nada */
+#app.visiting #colorCard, #colorCard[hidden] { display: none; } /* en modo visita / herramienta Persona no se edita nada */
